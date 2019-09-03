@@ -1,17 +1,9 @@
 extern crate nom;
 
 use nom::{
-  IResult,
-  bytes::complete::{tag, take_while_m_n, is_a},
-  combinator::map_res,
-  sequence::tuple,
-  character::complete::{digit1, char},
-  error::ErrorKind};
-
-
-fn from_string(input: &str) -> Result<i32, std::num::ParseIntError> {
-  i32::from_str_radix(input, 10)
-}
+    IResult,
+    character::complete::{digit1},
+    FindSubstring};
 
 
 #[derive(Debug)]
@@ -24,59 +16,64 @@ enum Tree {
 use crate::Tree::{Cons, Nil, Leef};
 
 
+/// Creates a new node in the tree
+/// 
+/// # Arguments
+/// 
+/// * `input` - A substring that will be split into a node and subtrees
+/// * `i` - Index of the operator that will act as node
+fn create_node(input: &str, i: usize) -> Tree{
+    
+    let operator: char = input[i..i+1].parse().unwrap();
+
+    let left_tree: Tree = create_tree(&input[..i]);
+    let right_tree: Tree = create_tree(&input[i+1..]);
+
+    return Cons(operator, Box::new(left_tree), Box::new(right_tree));
+}
+
+
+fn create_leef(input: &str) -> Tree{
+
+    let parsed: IResult<&str, &str> = digit1(input);
+
+    match parsed{
+        Ok(result) => Leef(result.1.parse().unwrap()),
+        Err(_error) => Nil
+    }
+}
+
+
 fn create_tree(input: &str) -> Tree{
 
-    let test = parse_digit(input);
+    let node: Tree;
 
-    let left_tree: Tree;
-    let right_tree: Tree;
-    let operator: &str;
-    let root;
+    // find operators with +- first so the come higher in the tree
+    // this so when the tree is evaluated the lowest nodes are done first 
+    // this means that if all the */ gets evaluated before +-
+    if let Some(i) = input.find_substring("+"){        
+        node = create_node(input, i);
+    }
+    else if let Some(i) = input.find_substring("-"){        
+        node = create_node(input, i);
+    }
+    else if let Some(i) = input.find_substring("*"){
+        node = create_node(input, i);
+    }
+    else if let Some(i) = input.find_substring("/"){        
+        node = create_node(input, i);
+    }
+    else{
+        node = create_leef(input);
+    }
 
-    match test{
-        Ok(i) =>{
-            let b = i;
-            
-            let input = b.0;
-            left_tree = Leef(from_string(b.1).unwrap());
-
-            if input.len() > 0 {
-                let a = parse_operator(input).unwrap();
-
-                right_tree = create_tree(&a.0);
-                operator = a.1;
-
-                root = Cons(operator.parse().unwrap(), Box::new(left_tree), Box::new(right_tree));
-
-            }else{
-                root = left_tree;
-            }
-        },
-        Err(error) =>{
-            println!("{:?}", error);
-            left_tree = Leef(101);
-            root = left_tree;
-        }
-    }    
-
-    return root;
-}
-
-fn parse_digit(input: &str) -> IResult<&str, &str>{
-    digit1(input)
-}
-
-fn parse_operator(input: &str) -> IResult<&str, &str>{
-    let (a, b) = tag("+")(input)?;
-
-    Ok((a, b))
+    return node;
 }
 
 
 fn main() {
 
-    let input = "101+1+2+3";
-
+    let input = "101*2*3+2/44+1*2+3-23*5/2";
     
     let tree = create_tree(input);
 
