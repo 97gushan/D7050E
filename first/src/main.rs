@@ -2,7 +2,7 @@ extern crate nom;
 
 use nom::{
     IResult,
-    character::complete::{digit1},
+    character::complete::{digit1, space1},
     FindSubstring};
 
 
@@ -55,7 +55,16 @@ fn create_node(input: &str, i: usize) -> Tree{
 
 fn create_leef(input: &str) -> Tree{
 
-    let parsed: IResult<&str, &str> = digit1(input);
+    let removed_whitespace: IResult<&str, &str> = space1(input);
+
+    let trimmed_input;
+
+    match removed_whitespace{
+        Ok(res) => trimmed_input = res.0,
+        Err(_error) => trimmed_input = input
+    }
+    
+    let parsed: IResult<&str, &str> = digit1(trimmed_input);
 
     match parsed{
         Ok(result) => Leef(result.1.parse().unwrap()),
@@ -93,7 +102,7 @@ fn create_tree(input: &str) -> Tree{
 
 fn main() {
 
-    let input = "101*2*3+2/44+1*2+3-23*5/2";
+    let input = "   101*2*3+2/44+1        *        2+3* 10-23*5/2 + 2 + 1 *3 - 2 /5 *2 + 1";
     
     let tree = create_tree(input);
 
