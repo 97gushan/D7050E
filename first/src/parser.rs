@@ -10,7 +10,7 @@ pub mod parse_expression{
 
     #[derive(Debug)]
     pub enum Tree {
-        Cons(Op, Box<Tree>, Box<Tree>),
+        Node(Op, Box<Tree>, Box<Tree>),
         Leaf(i32),
     }
 
@@ -44,11 +44,10 @@ pub mod parse_expression{
         }else{
             operator = Op::Div;
         }
-
         let left_tree: Tree = create_tree(&input[..i]);
         let right_tree: Tree = create_tree(&input[i+1..]);
 
-        return Tree::Cons(operator, Box::new(left_tree), Box::new(right_tree));
+        return Tree::Node(operator, Box::new(left_tree), Box::new(right_tree));
     }
 
 
@@ -89,6 +88,9 @@ pub mod parse_expression{
             node = create_node(input, i);
         }
         else if let Some(i) = input.find_substring("/"){        
+            node = create_node(input, i);
+        }
+        else if let Some(i) = input.find_substring("%"){
             node = create_node(input, i);
         }
         else{
