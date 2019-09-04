@@ -9,8 +9,7 @@ use nom::{
 #[derive(Debug)]
 enum Tree {
     Cons(Op, Box<Tree>, Box<Tree>),
-    Leef(i32),
-    Nil,
+    Leaf(i32),
 }
 
 #[derive(Debug)]
@@ -21,7 +20,7 @@ enum Op{
     Div,
 }
 
-use crate::Tree::{Cons, Nil, Leef};
+use crate::Tree::{Cons, Leaf};
 
 
 /// Creates a new node in the tree
@@ -53,7 +52,7 @@ fn create_node(input: &str, i: usize) -> Tree{
 }
 
 
-fn create_leef(input: &str) -> Tree{
+fn create_leaf(input: &str) -> Tree{
 
     let removed_whitespace: IResult<&str, &str> = space1(input);
 
@@ -67,7 +66,7 @@ fn create_leef(input: &str) -> Tree{
     let parsed: IResult<&str, &str> = digit1(trimmed_input);
 
     match parsed{
-        Ok(result) => Leef(result.1.parse().unwrap()),
+        Ok(result) => Leaf(result.1.parse().unwrap()),
         Err(_error) => panic!("This is not a number!!!!")
     }
 }
@@ -93,7 +92,7 @@ fn create_tree(input: &str) -> Tree{
         node = create_node(input, i);
     }
     else{
-        node = create_leef(input);
+        node = create_leaf(input);
     }
 
     return node;
