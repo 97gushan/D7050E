@@ -8,9 +8,17 @@ use nom::{
 
 #[derive(Debug)]
 enum Tree {
-    Cons(char, Box<Tree>, Box<Tree>),
+    Cons(Op, Box<Tree>, Box<Tree>),
     Leef(i32),
     Nil,
+}
+
+#[derive(Debug)]
+enum Op{
+    Add,
+    Sub,
+    Mult,
+    Div,
 }
 
 use crate::Tree::{Cons, Nil, Leef};
@@ -24,7 +32,19 @@ use crate::Tree::{Cons, Nil, Leef};
 /// * `i` - Index of the operator that will act as node
 fn create_node(input: &str, i: usize) -> Tree{
     
-    let operator: char = input[i..i+1].parse().unwrap();
+    let operator_char: char = input[i..i+1].parse().unwrap();
+
+    let operator: Op;
+ 
+    if operator_char == '+'{
+        operator = Op::Add;
+    }else if operator_char == '-'{
+        operator = Op::Sub;
+    }else if operator_char == '*'{
+        operator = Op::Mult;
+    }else{
+        operator = Op::Div;
+    }
 
     let left_tree: Tree = create_tree(&input[..i]);
     let right_tree: Tree = create_tree(&input[i+1..]);
