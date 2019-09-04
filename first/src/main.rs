@@ -32,15 +32,15 @@ use crate::Tree::{Cons, Nil, Leef};
 /// * `i` - Index of the operator that will act as node
 fn create_node(input: &str, i: usize) -> Tree{
     
-    let operator_char: char = input[i..i+1].parse().unwrap();
+    let operator_char: &str = &input[i..i+1];
 
     let operator: Op;
  
-    if operator_char == '+'{
+    if operator_char == "+"{
         operator = Op::Add;
-    }else if operator_char == '-'{
+    }else if operator_char == "-"{
         operator = Op::Sub;
-    }else if operator_char == '*'{
+    }else if operator_char == "*"{
         operator = Op::Mult;
     }else{
         operator = Op::Div;
@@ -68,7 +68,7 @@ fn create_leef(input: &str) -> Tree{
 
     match parsed{
         Ok(result) => Leef(result.1.parse().unwrap()),
-        Err(_error) => Nil
+        Err(_error) => panic!("This is not a number!!!!")
     }
 }
 
@@ -102,7 +102,7 @@ fn create_tree(input: &str) -> Tree{
 
 fn main() {
 
-    let input = "   101*2*3+2/44+1        *        2+3* 10-23*5/2 + 2 + 1 *3 - 2 /5 *2 + 1";
+    let input = "101*2*3+2/44+1*2+3* 10-23*5/2 + 2 + 1 *3 - 2 /5 *2 + 1";
     
     let tree = create_tree(input);
 
