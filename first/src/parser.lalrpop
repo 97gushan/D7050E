@@ -1,0 +1,34 @@
+use std::str::FromStr;
+use crate::ast::{ExprTree, Op};
+
+grammar;
+
+pub Expr: Box<ExprTree> = { 
+    Expr ExprOp Factor => Box::new(ExprTree::Node(<>)),
+    Factor,
+};
+
+ExprOp: Op = {
+    "+" => Op::Add,
+    "-" => Op::Sub,
+};
+
+
+pub Factor: Box<ExprTree> = {
+    Factor FactorOp Term => Box::new(ExprTree::Node(<>)),
+    Term,
+};
+
+FactorOp: Op = {
+    "*" => Op::Mul,
+    "/" => Op::Div,
+};
+
+Term: Box<ExprTree> = {
+    Num => Box::new(ExprTree::Number(<>)),
+    "(" <Expr> ")",
+};
+
+Num: i32 = {
+    r"-?[0-9]+" => i32::from_str(<>).unwrap()
+};
