@@ -2,13 +2,24 @@
 #[derive(Debug)]
 pub enum ExprTree{
     Number(i32),
-    Node(Box<ExprTree>, Op, Box<ExprTree>),
+    Var(String),
+    BinNode(Box<ExprTree>, BinOp, Box<ExprTree>),
+    EqNode(Box<ExprTree>, Box<ExprTree>),
 }
 
 #[derive(Debug)]
-pub enum Op{
+pub enum BinOp{
     Add,
     Sub,
     Div,
     Mul 
+}
+
+
+#[derive(Debug)]
+pub enum LogOp{
+    And,
+    Or,
+    Not,
+    Eq
 }

@@ -1,30 +1,36 @@
 use std::str::FromStr;
-use crate::ast::{ExprTree, Op};
+use crate::ast::{ExprTree, BinOp};
 
 grammar;
 
+pub Assign: Box<ExprTree> = {
+    AssignVar Expr => Box::new(ExprTree::EqNode(<>))
+}
+
+
 pub Expr: Box<ExprTree> = { 
-    Expr ExprOp Factor => Box::new(ExprTree::Node(<>)),
+    Expr ExprOp Factor => Box::new(ExprTree::BinNode(<>)),
     Factor,
 };
 
-ExprOp: Op = {
-    "+" => Op::Add,
-    "-" => Op::Sub,
+ExprOp: BinOp = {
+    "+" => BinOp::Add,
+    "-" => BinOp::Sub,
 };
 
 
 pub Factor: Box<ExprTree> = {
-    Factor FactorOp Term => Box::new(ExprTree::Node(<>)),
+    Factor FactorOp Term => Box::new(ExprTree::BinNode(<>)),
     Term,
 };
 
-FactorOp: Op = {
-    "*" => Op::Mul,
-    "/" => Op::Div,
+FactorOp: BinOp = {
+    "*" => BinOp::Mul,
+    "/" => BinOp::Div,
 };
 
 Term: Box<ExprTree> = {
+    Var => Box::new(ExprTree::Var(<>)),
     Num => Box::new(ExprTree::Number(<>)),
     "(" <Expr> ")",
 };
@@ -32,3 +38,11 @@ Term: Box<ExprTree> = {
 Num: i32 = {
     r"-?[0-9]+" => i32::from_str(<>).unwrap()
 };
+
+AssignVar: Box<ExprTree> = {
+    Var => Box::new(ExprTree::Var(<>)),
+}
+
+Var: String = {
+    r"[A-z_][A-z0-9_]*" => String::from(<>)
+}
