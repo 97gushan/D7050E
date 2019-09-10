@@ -2,15 +2,17 @@
 #[derive(Debug, PartialEq)]
 pub enum ExprTree{
     Number(i32),
-    Bool(Bool),
+    Bool(BoolType),
     Var(String),
     BinNode(Box<ExprTree>, BinOp, Box<ExprTree>),
     LogNode(Box<ExprTree>, LogOp, Box<ExprTree>),
     AssignNode(Box<ExprTree>, Type, Box<ExprTree>),
     SeqNode(Box<ExprTree>, Box<ExprTree>),
     
-    IfNode(Box<ExprTree>, Box<ExprTree>, Box<ExprTree>),
+    IfNode(Box<ExprTree>, Box<ExprTree>),
+    IfElseNode(Box<ExprTree>, Box<ExprTree>, Box<ExprTree>),
 
+    STOP,
 }
 
 #[derive(Debug, PartialEq)]
@@ -42,7 +44,7 @@ pub enum LogOp{
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Bool{
+pub enum BoolType{
     True,
     False,
 }

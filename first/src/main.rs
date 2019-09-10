@@ -15,7 +15,13 @@ fn main() {
     //              a = 3 + 3 - 2*5;
     //              let b = 10;";
 
-    let input = "let a: bool = true && 2>3 || 5 == 10;";
+    let input = "if(1==2){
+                    let a: i32 = 2;
+                };
+                
+                let a: i32 = 10;
+                let b: bool = 2==2;";
+                
 
     //let expr = parser::ExprParser::new().parse(input).unwrap();
 

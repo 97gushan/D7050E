@@ -1,21 +1,32 @@
 use std::str::FromStr;
-use crate::ast::{ExprTree, BinOp, LogOp, Bool, Type};
+use crate::ast::{ExprTree, BinOp, LogOp, BoolType, Type};
 
 grammar;
 
 pub SeparateLines: Box<ExprTree> = {
     <FindKeyword> ";" <SeparateLines> => Box::new(ExprTree::SeqNode(<>)),
     <FindKeyword> ";",
+     
 }
 
 pub FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
+    "if" <StatementIf>,
     Assign,  // assignment on already created var 
+}
+
+StatementIf: Box<ExprTree> = {
+    "(" <BoolComp> ")" "{" <SeparateLines> "}else{" <SeparateLines> "}" => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <BoolComp> ")" "{" <SeparateLines> "}" => Box::new(ExprTree::IfNode(<>)),
+
+    "(" <NumComp> ")" "{" <SeparateLines> "}else{" <SeparateLines> "}" => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <NumComp> ")" "{" <SeparateLines> "}" => Box::new(ExprTree::IfNode(<>)),
 }
 
 Assign: Box<ExprTree> = {
     AssignVar Type Expr => Box::new(ExprTree::AssignNode(<>)),
     AssignVar Type BoolComp => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar Type NumComp => Box::new(ExprTree::AssignNode(<>)),
 }
 
 AssignVar: Box<ExprTree> = {
@@ -31,8 +42,8 @@ pub BoolComp: Box<ExprTree> = {
     BoolComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
     NumComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
 
-    "true" => Box::new(ExprTree::Bool(Bool::True)),
-    "false" => Box::new(ExprTree::Bool(Bool::False)),
+    "true" => Box::new(ExprTree::Bool(BoolType::True)),
+    "false" => Box::new(ExprTree::Bool(BoolType::False)),
 
 }
 
