@@ -1,11 +1,59 @@
 use std::str::FromStr;
-use crate::ast::{ExprTree, BinOp};
+use crate::ast::{ExprTree, BinOp, LogOp, Bool, Type};
 
 grammar;
 
-pub Assign: Box<ExprTree> = {
-    AssignVar Expr => Box::new(ExprTree::EqNode(<>))
+pub SeparateLines: Box<ExprTree> = {
+    <FindKeyword> ";" <SeparateLines> => Box::new(ExprTree::SeqNode(<>)),
+    <FindKeyword> ";",
 }
+
+pub FindKeyword: Box<ExprTree> = {
+    "let" <Assign>,
+    Assign,  // assignment on already created var 
+}
+
+Assign: Box<ExprTree> = {
+    AssignVar Type Expr => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar Type BoolComp => Box::new(ExprTree::AssignNode(<>)),
+}
+
+AssignVar: Box<ExprTree> = {
+    Var => Box::new(ExprTree::Var(<>)),
+}
+
+Type: Type ={
+    ": i32 =" => Type::I32,
+    ": bool =" => Type::Bool,
+}
+
+pub BoolComp: Box<ExprTree> = {
+    BoolComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
+    NumComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
+
+    "true" => Box::new(ExprTree::Bool(Bool::True)),
+    "false" => Box::new(ExprTree::Bool(Bool::False)),
+
+}
+
+BoolOp: LogOp = {
+    "&&" => LogOp::And,
+    "||" => LogOp::Or,
+}
+
+pub NumComp: Box<ExprTree> = {
+    Expr NumCompOp Expr => Box::new(ExprTree::LogNode(<>)),
+}
+
+NumCompOp: LogOp = {
+    "<" => LogOp::Les,
+    ">" => LogOp::Gre,
+    "<=" => LogOp::LeEq,
+    ">=" => LogOp::GrEq,
+    "==" => LogOp::Eq,
+    "!=" => LogOp::NoEq,
+}
+
 
 
 pub Expr: Box<ExprTree> = { 
@@ -19,7 +67,7 @@ ExprOp: BinOp = {
 };
 
 
-pub Factor: Box<ExprTree> = {
+Factor: Box<ExprTree> = {
     Factor FactorOp Term => Box::new(ExprTree::BinNode(<>)),
     Term,
 };
@@ -38,10 +86,6 @@ Term: Box<ExprTree> = {
 Num: i32 = {
     r"-?[0-9]+" => i32::from_str(<>).unwrap()
 };
-
-AssignVar: Box<ExprTree> = {
-    Var => Box::new(ExprTree::Var(<>)),
-}
 
 Var: String = {
     r"[A-z_][A-z0-9_]*" => String::from(<>)
