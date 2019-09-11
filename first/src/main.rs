@@ -27,15 +27,18 @@ fn main() {
     //             let b: bool = 2==2 || 1 > 5;
     //             let c: i32 = 123;";
 
-    //let input = "let a: bool = 1 == 2 || true && 5 < 10;";
+    let input = "if(true){ let a: i32 = 2;} let b: i32 = 123;";
 
-    let input = "if(true){ 
-                    let a: i32 = 2;
-                }else if(false){
-                    let c: i32 = 2;
-                }else{
-                    let b: i32 = 3;
-                };";       
+    // let input = "if(true){ 
+    //                 let a: i32 = 2;
+    //             }
+    //             let c: i32 = 12;
+                
+    //             if(false){
+    //                 let b: i32 = 12;    
+    //             }
+                
+    //             let d: bool = true;";       
 
     //let expr = parser::ExprParser::new().parse(input).unwrap();
 
@@ -158,7 +161,7 @@ mod test{
 
     #[test]
     fn test_if(){
-        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;};").unwrap(), 
+        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;}").unwrap(), 
                 Box::new(ExprTree::IfNode(
                     Box::new(ExprTree::Bool(BoolType::True)),
                     Box::new(ExprTree::AssignNode(
@@ -168,7 +171,7 @@ mod test{
                     ))
                 )));
 
-        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;}else{let a: i32 = 2;};").unwrap(), 
+        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;}else{let a: i32 = 2;}").unwrap(), 
                 Box::new(ExprTree::IfElseNode(
                     Box::new(ExprTree::Bool(BoolType::True)),
                     Box::new(ExprTree::AssignNode(
@@ -183,7 +186,7 @@ mod test{
                     ))
                 )));
 
-        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;}else if(false){let a: i32 = 2;}else if(true){let a: i32 = 2;};").unwrap(), 
+        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;}else if(false){let a: i32 = 2;}else if(true){let a: i32 = 2;}").unwrap(), 
                 Box::new(ExprTree::IfElseNode(
                     Box::new(ExprTree::Bool(BoolType::True)),
                     Box::new(ExprTree::AssignNode(
@@ -208,5 +211,22 @@ mod test{
                         ))
                     ))
                 )));
+
+        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;} let b: i32 = 123;").unwrap(), 
+                Box::new(ExprTree::SeqNode(
+                    Box::new(ExprTree::IfNode(
+                        Box::new(ExprTree::Bool(BoolType::True)),
+                        Box::new(ExprTree::AssignNode(
+                            Box::new(ExprTree::Var("a".to_string())),
+                            Type::I32,
+                            Box::new(ExprTree::Number(2))
+                        ))
+                    )),
+                    Box::new(ExprTree::AssignNode(
+                        Box::new(ExprTree::Var("b".to_string())),
+                        Type::I32,
+                        Box::new(ExprTree::Number(123))
+                    )))
+                ));
     }
 }

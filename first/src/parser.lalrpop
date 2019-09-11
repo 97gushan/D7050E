@@ -5,7 +5,10 @@ grammar;
 
 pub SeparateLines: Box<ExprTree> = {
     <FindKeyword> ";" <SeparateLines> => Box::new(ExprTree::SeqNode(<>)),
+    <FindKeyword> "}" <SeparateLines> => Box::new(ExprTree::SeqNode(<>)),
+
     <FindKeyword> ";",
+    <FindKeyword> "}",
      
 }
 
@@ -17,12 +20,12 @@ pub FindKeyword: Box<ExprTree> = {
 
 StatementIf: Box<ExprTree> = {
     "(" <BoolComp> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <BoolComp> ")" "{" <SeparateLines> "}else{" <SeparateLines> "}" => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <BoolComp> ")" "{" <SeparateLines> "}" => Box::new(ExprTree::IfNode(<>)),
+    "(" <BoolComp> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <BoolComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
 
     "(" <NumComp> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <NumComp> ")" "{" <SeparateLines> "}else{" <SeparateLines> "}" => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <NumComp> ")" "{" <SeparateLines> "}" => Box::new(ExprTree::IfNode(<>)),
+    "(" <NumComp> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <NumComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
 }
 
 pub Assign: Box<ExprTree> = {
