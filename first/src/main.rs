@@ -27,18 +27,19 @@ fn main() {
     //             let b: bool = 2==2 || 1 > 5;
     //             let c: i32 = 123;";
 
-    let input = "if(true){ let a: i32 = 2;} let b: i32 = 123;";
+    //let input = "while(true){ let a: i32 = 2;} let b: i32 = 123;";
 
-    // let input = "if(true){ 
-    //                 let a: i32 = 2;
-    //             }
-    //             let c: i32 = 12;
+    let input = "if(true){ 
+                    let a: i32 = 2;
+                    
+                    if(false){
+                        let c: i32 = 132;
+                    }
+
+                    let b: i32 = 1234;
+                }
                 
-    //             if(false){
-    //                 let b: i32 = 12;    
-    //             }
-                
-    //             let d: bool = true;";       
+                let a: i32 = 13;";       
 
     //let expr = parser::ExprParser::new().parse(input).unwrap();
 
@@ -228,5 +229,20 @@ mod test{
                         Box::new(ExprTree::Number(123))
                     )))
                 ));
+
+        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ if(true){let a: i32 = 123;}}").unwrap(), 
+                    Box::new(ExprTree::IfNode(
+                        Box::new(ExprTree::Bool(BoolType::True)),
+                        Box::new(ExprTree::IfNode(
+                            Box::new(ExprTree::Bool(BoolType::True)),
+                            Box::new(ExprTree::AssignNode(
+                                Box::new(ExprTree::Var("a".to_string())),
+                                Type::I32,
+                                Box::new(ExprTree::Number(123))
+                            )
+                        ))
+                    ))
+                    
+            ));
     }
 }
