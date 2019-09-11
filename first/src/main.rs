@@ -27,19 +27,19 @@ fn main() {
     //             let b: bool = 2==2 || 1 > 5;
     //             let c: i32 = 123;";
 
-    //let input = "while(true){ let a: i32 = 2;} let b: i32 = 123;";
+    let input = "while(true){ let a: i32 = 2;} let b: i32 = 123;";
 
-    let input = "if(true){ 
-                    let a: i32 = 2;
+    // let input = "if(true){ 
+    //                 let a: i32 = 2;
                     
-                    if(false){
-                        let c: i32 = 132;
-                    }
+    //                 if(false){
+    //                     let c: i32 = 132;
+    //                 }
 
-                    let b: i32 = 1234;
-                }
+    //                 let b: i32 = 1234;
+    //             }
                 
-                let a: i32 = 13;";       
+    //             let a: i32 = 13;";       
 
     //let expr = parser::ExprParser::new().parse(input).unwrap();
 
