@@ -15,7 +15,13 @@ pub SeparateLines: Box<ExprTree> = {
 pub FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
     "if" <StatementIf>,
+    "while" <StatementWhile>,
     Assign,  // assignment on already created var 
+}
+
+
+StatementWhile: Box<ExprTree> = {
+    "(" <BoolComp> ")" "{" <SeparateLines> => Box::new(ExprTree::WhileNode(<>)),
 }
 
 StatementIf: Box<ExprTree> = {

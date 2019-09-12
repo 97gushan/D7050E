@@ -12,6 +12,8 @@ pub enum ExprTree{
     IfNode(Box<ExprTree>, Box<ExprTree>),
     IfElseNode(Box<ExprTree>, Box<ExprTree>, Box<ExprTree>),
 
+    WhileNode(Box<ExprTree>, Box<ExprTree>),
+
     STOP,
 }
 
