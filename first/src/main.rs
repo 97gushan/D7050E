@@ -245,4 +245,19 @@ mod test{
                     
             ));
     }
+
+    #[test]
+    fn test_while(){
+
+        assert_eq!(parser::SeparateLinesParser::new().parse("while(true){let a: i32 = 2;}").unwrap(),
+            Box::new(ExprTree::WhileNode(
+                Box::new(ExprTree::Bool(BoolType::True)),
+                Box::new(ExprTree::AssignNode(
+                    Box::new(ExprTree::Var("a".to_string())),
+                    Type::I32,
+                    Box::new(ExprTree::Number(2))
+                ))
+            )));
+
+    }
 }
