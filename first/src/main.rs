@@ -7,6 +7,9 @@ pub mod ast;
 
 lalrpop_mod!(pub parser);
 
+use std::fs::File;
+use std::io;
+use std::io::prelude::*;
 
 fn main() {
 
@@ -27,30 +30,47 @@ fn main() {
     //             let b: bool = 2==2 || 1 > 5;
     //             let c: i32 = 123;";
 
-    let input = "while(true){ let a: i32 = 2;} let b: i32 = 123;";
+    //let input = "if(true){ let a: i32 = 2;} let b: i32 = 123;";
 
     // let input = "if(true){ 
     //                 let a: i32 = 2;
-                    
-    //                 if(false){
-    //                     let c: i32 = 132;
-    //                 }
-
-    //                 let b: i32 = 1234;
+    //             }
+    //             let c: i32 = 12;
+                
+    //             if(false){
+    //                 let b: i32 = 12;    
     //             }
                 
-    //             let a: i32 = 13;";       
+    //             let d: bool = true;";       
 
     //let expr = parser::ExprParser::new().parse(input).unwrap();
 
-    let set = parser::SeparateLinesParser::new().parse(input).unwrap();
+    let input: String;
+
+    match read_src_file("src/input.txt"){
+        Ok(content) => input = content,
+        Err(_error) => input = String::from("")
+    }
+
+
+    println!("{}", &input);
+
+
+    let set = parser::SeparateLinesParser::new().parse(&input).unwrap();
 
     println!("{:#?}", set);  
 }
 
 
 
+fn read_src_file(src_path: &str) -> io::Result<(String)>{
+    let mut file = File::open(src_path)?;
 
+    let mut content = String::new();
+    file.read_to_string(&mut content);
+
+    Ok(content)
+}
 
 
 #[cfg(test)]
@@ -230,7 +250,7 @@ mod test{
                     )))
                 ));
 
-        assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ if(true){let a: i32 = 123;}}").unwrap(), 
+                assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ if(true){let a: i32 = 123;}}").unwrap(), 
                     Box::new(ExprTree::IfNode(
                         Box::new(ExprTree::Bool(BoolType::True)),
                         Box::new(ExprTree::IfNode(
