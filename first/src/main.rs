@@ -12,39 +12,6 @@ use std::io;
 use std::io::prelude::*;
 
 fn main() {
-
-    //let input = "101*2*3+2/44+1*2+3* 10-23*5/2 + 2 + 1 *3 - 2 /5 *2 + 1";
-    //let input = "1+3*(1 + 2) * 3 - -5 + 1 + __0this_is_camel_case";
-    //let input = "(1+2)";
-    // let input = "let a = 2; 
-    //              a = 3 + 3 - 2*5;
-    //              let b = 10;";
-
-    // let input = "if(true){
-    //                 let a: i32 = 2;
-    //             }else{
-    //                 let k: i32 = 10;
-    //             };
-                
-    //             let a: i32 = 10;
-    //             let b: bool = 2==2 || 1 > 5;
-    //             let c: i32 = 123;";
-
-    //let input = "if(true){ let a: i32 = 2;} let b: i32 = 123;";
-
-    // let input = "if(true){ 
-    //                 let a: i32 = 2;
-    //             }
-    //             let c: i32 = 12;
-                
-    //             if(false){
-    //                 let b: i32 = 12;    
-    //             }
-                
-    //             let d: bool = true;";       
-
-    //let expr = parser::ExprParser::new().parse(input).unwrap();
-
     let input: String;
 
     match read_src_file("src/input.txt"){
@@ -52,9 +19,7 @@ fn main() {
         Err(_error) => input = String::from("")
     }
 
-
     println!("{}", &input);
-
 
     let set = parser::SeparateLinesParser::new().parse(&input).unwrap();
 

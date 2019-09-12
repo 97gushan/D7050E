@@ -16,7 +16,6 @@ pub FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
     "if" <StatementIf>,
     "while" <StatementWhile>,
-    Assign,  // assignment on already created var 
 }
 
 

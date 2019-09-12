@@ -13,8 +13,6 @@ pub enum ExprTree{
     IfElseNode(Box<ExprTree>, Box<ExprTree>, Box<ExprTree>),
 
     WhileNode(Box<ExprTree>, Box<ExprTree>),
-
-    STOP,
 }
 
 #[derive(Debug, PartialEq)]
