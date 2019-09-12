@@ -1,0 +1,11 @@
+if(true){ 
+    let a: i32 = 2;
+}
+
+let c: i32 = 12;
+                
+if(false){
+    let b: i32 = 12;    
+}
+                
+let d: bool = true;
