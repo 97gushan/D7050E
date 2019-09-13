@@ -90,12 +90,20 @@ VarType: Type ={
 
 pub BoolComp: Box<ExprTree> = {
     BoolComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
-    NumComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
-
-    NumComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
     BoolComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
 
-    BoolType
+    NumComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
+    NumComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
+
+    BoolComp BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
+    Expr BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
+    Expr BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
+
+    Expr BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
+    NumComp BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
+
+    BoolType,
+    
 }
 
 BoolType: Box<ExprTree> = {

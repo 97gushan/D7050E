@@ -95,6 +95,13 @@ mod test{
                         LogOp::And,
                         Box::new(ExprTree::Bool(BoolType::False))
                 )));
+
+        assert_eq!(parser::BoolCompParser::new().parse("a || b").unwrap(), 
+                Box::new(ExprTree::LogNode(
+                        Box::new(ExprTree::Var("a".to_string())),
+                        LogOp::Or,
+                        Box::new(ExprTree::Var("b".to_string()))
+                )));
     }
 
     #[test]
