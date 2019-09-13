@@ -37,7 +37,7 @@ pub Params: FnHead = {
     <CommaSepVec> => FnHead::Params(<>),
 }
 
-pub CommaSepVec = Comma<Assign>;
+pub CommaSepVec = Comma<AssignParam>;
 
 Comma<T>: Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e { // (2)
@@ -62,6 +62,10 @@ StatementIf: Box<ExprTree> = {
     "(" <NumComp> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
     "(" <NumComp> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
     "(" <NumComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
+}
+
+AssignParam: Box<ExprTree> = {
+    AssignVar VarType => Box::new(ExprTree::ParamNode(<>)),
 }
 
 pub Assign: Box<ExprTree> = {

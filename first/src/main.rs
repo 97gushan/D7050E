@@ -246,17 +246,40 @@ mod test{
 
     }
     #[test]
-    // fn test_fun(){
-    //      assert_eq!(parser::SeparateFnParser::new().parse("fn test() -> i32{let a: i32 = 123;}").unwrap(),
-    //         Box::new(ExprTree::FnNode(
-    //             Box::new(ExprTree::FnHead("test".to_string())),
-    //             Type::I32,
-    //             Box::new(ExprTree::AssignNode(
-    //                 Box::new(ExprTree::Var("a".to_string())),
-    //                 Type::I32,
-    //                 Box::new(ExprTree::Number(123))
-    //             ))
-    //         )));
-    // }
+    fn test_fun(){
+         assert_eq!(parser::SeparateFnParser::new().parse("fn test() -> i32{let a: i32 = 123;}").unwrap(),
+            Box::new(ExprTree::FnNode(
+                FnHead::Name("test".to_string()),
+                FnHead::Params(Vec::new()),
+                FnHead::Return(Type::I32),
+                Box::new(ExprTree::AssignNode(
+                    Box::new(ExprTree::Var("a".to_string())),
+                    Type::I32,
+                    Box::new(ExprTree::Number(123))
+                ))
+            )));
+
+        assert_eq!(parser::SeparateFnParser::new().parse("fn test(a: i32, b: bool) -> i32{let a: i32 = 123;}").unwrap(),
+            Box::new(ExprTree::FnNode(
+                FnHead::Name("test".to_string()),
+                FnHead::Params(vec!(
+                    Box::new(ExprTree::ParamNode(
+                        Box::new(ExprTree::Var("a".to_string())),
+                        Type::I32
+                    )),
+                    Box::new(ExprTree::ParamNode(
+                        Box::new(ExprTree::Var("b".to_string())),
+                        Type::Bool
+                    )),
+
+                )),
+                FnHead::Return(Type::I32),
+                Box::new(ExprTree::AssignNode(
+                    Box::new(ExprTree::Var("a".to_string())),
+                    Type::I32,
+                    Box::new(ExprTree::Number(123))
+                ))
+            )));
+    }
 
 }

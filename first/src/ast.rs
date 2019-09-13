@@ -9,6 +9,8 @@ pub enum ExprTree{
     LogNode(Box<ExprTree>, LogOp, Box<ExprTree>),
     
     AssignNode(Box<ExprTree>, Type, Box<ExprTree>),
+    ParamNode(Box<ExprTree>, Type),
+
     SeqNode(Box<ExprTree>, Box<ExprTree>),
     
     IfNode(Box<ExprTree>, Box<ExprTree>),
