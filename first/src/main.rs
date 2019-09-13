@@ -21,7 +21,7 @@ fn main() {
 
     println!("{}", &input);
 
-    let set = parser::SeparateLinesParser::new().parse(&input).unwrap();
+    let set = parser::SeparateFnParser::new().parse(&input).unwrap();
 
     println!("{:#?}", set);  
 }
@@ -245,4 +245,18 @@ mod test{
             )));
 
     }
+    #[test]
+    // fn test_fun(){
+    //      assert_eq!(parser::SeparateFnParser::new().parse("fn test() -> i32{let a: i32 = 123;}").unwrap(),
+    //         Box::new(ExprTree::FnNode(
+    //             Box::new(ExprTree::FnHead("test".to_string())),
+    //             Type::I32,
+    //             Box::new(ExprTree::AssignNode(
+    //                 Box::new(ExprTree::Var("a".to_string())),
+    //                 Type::I32,
+    //                 Box::new(ExprTree::Number(123))
+    //             ))
+    //         )));
+    // }
+
 }

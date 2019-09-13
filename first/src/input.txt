@@ -1,11 +1,4 @@
-if(true){ 
-    let a: i32 = 2;
-}
 
-let c: i32 = 12;
-                
-if(false){
-    let b: i32 = 12;    
+fn main(a: i32 = 1, b: i32 = 3) -> i32{
+    let a: i32 = 123;
 }
-                
-let d: bool = true;

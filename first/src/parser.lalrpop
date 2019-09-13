@@ -1,7 +1,11 @@
 use std::str::FromStr;
-use crate::ast::{ExprTree, BinOp, LogOp, BoolType, Type};
+use crate::ast::{ExprTree, BinOp, LogOp, BoolType, Type, FnHead};
 
 grammar;
+
+pub SeparateFn: Box<ExprTree> = {
+    "fn" <StatementFn> "}" => <>,
+}
 
 pub SeparateLines: Box<ExprTree> = {
     <FindKeyword> ";" <SeparateLines> => Box::new(ExprTree::SeqNode(<>)),
@@ -16,8 +20,35 @@ pub FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
     "if" <StatementIf>,
     "while" <StatementWhile>,
+
+    "pass" => Box::new(ExprTree::Pass), 
 }
 
+
+StatementFn: Box<ExprTree> = {
+    <FnHead> "(" <Params> ") -> " <FnType> "{" <SeparateLines> => Box::new(ExprTree::FnNode(<>)),
+}
+
+FnHead: FnHead = {
+    Var => FnHead::Name(<>),
+}
+
+pub Params: FnHead = {
+    <CommaSepVec> => FnHead::Params(<>),
+}
+
+pub CommaSepVec = Comma<Assign>;
+
+Comma<T>: Vec<T> = {
+    <v:(<T> ",")*> <e:T?> => match e { // (2)
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+}
 
 StatementWhile: Box<ExprTree> = {
     "(" <BoolComp> ")" "{" <SeparateLines> => Box::new(ExprTree::WhileNode(<>)),
@@ -34,18 +65,23 @@ StatementIf: Box<ExprTree> = {
 }
 
 pub Assign: Box<ExprTree> = {
-    AssignVar Type Expr => Box::new(ExprTree::AssignNode(<>)),
-    AssignVar Type BoolComp => Box::new(ExprTree::AssignNode(<>)),
-    AssignVar Type NumComp => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar VarType Expr => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar VarType BoolComp => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar VarType NumComp => Box::new(ExprTree::AssignNode(<>)),
 }
 
 AssignVar: Box<ExprTree> = {
     Var => Box::new(ExprTree::Var(<>)),
 }
 
-Type: Type ={
-    ": i32 =" => Type::I32,
-    ": bool =" => Type::Bool,
+FnType: FnHead = {
+    "i32" => FnHead::Return(Type::I32),
+    "bool" => FnHead::Return(Type::Bool),
+}
+
+VarType: Type ={
+    ": i32" "="? => Type::I32,
+    ": bool" "="? => Type::Bool,
 }
 
 pub BoolComp: Box<ExprTree> = {
