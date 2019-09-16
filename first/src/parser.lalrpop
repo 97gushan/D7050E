@@ -27,9 +27,8 @@ pub FindKeyword: Box<ExprTree> = {
 
     "pass" => Box::new(ExprTree::Pass), 
 
-    <v:Var> "=" <n:Num> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)), Box::new(ExprTree::Number(n)))),
-    <v:Var> "=" <f:FunctionCall> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)),f)),  
-    
+    <v:Var> "=" <e:Expr> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)), e)),
+        
     <FunctionCall>,
 
     "return" <Expr> => Box::new(ExprTree::Return(<>)), 
@@ -166,7 +165,7 @@ NumCompOp: LogOp = {
 
 pub Expr: Box<ExprTree> = { 
     Expr ExprOp Factor => Box::new(ExprTree::BinNode(<>)),
-    Factor,
+    Factor, 
 };
 
 ExprOp: BinOp = {
@@ -188,6 +187,7 @@ FactorOp: BinOp = {
 Term: Box<ExprTree> = {
     Var => Box::new(ExprTree::Var(<>)),
     Num => Box::new(ExprTree::Number(<>)),
+    <FunctionCall>,
     "(" <Expr> ")",
 };
 
