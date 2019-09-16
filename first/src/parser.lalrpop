@@ -1,7 +1,15 @@
 use std::str::FromStr;
-use crate::ast::{ExprTree, BinOp, LogOp, BoolType, Type};
+use crate::ast::{ExprTree, BinOp, LogOp, BoolType, Type, FnHead};
 
 grammar;
+
+pub Program: Vec<Box<ExprTree>> = {
+    <FunSepVec> => <>,
+}
+
+pub SeparateFn: Box<ExprTree> = {
+    "fn" <StatementFn>  => <>,
+}
 
 pub SeparateLines: Box<ExprTree> = {
     <FindKeyword> ";" <SeparateLines> => Box::new(ExprTree::SeqNode(<>)),
@@ -16,8 +24,63 @@ pub FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
     "if" <StatementIf>,
     "while" <StatementWhile>,
+
+    "pass" => Box::new(ExprTree::Pass), 
+
+    <v:Var> "=" <e:Expr> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)), e)),
+        
+    <FunctionCall>,
+
+    "return" <Expr> => Box::new(ExprTree::Return(<>)), 
+
 }
 
+FunctionCall: Box<ExprTree> = {
+    <FnHead> "(" <Arguments> ")" => Box::new(ExprTree::FunctionCall(<>)),
+}
+
+StatementFn: Box<ExprTree> = {
+    <FnHead> "(" <Params> ") -> " <FnType> "{" <SeparateLines> => Box::new(ExprTree::FnNode(<>)),
+}
+
+FnHead: FnHead = {
+    Var => FnHead::Name(<>),
+}
+
+pub FunSepVec = FunSep<SeparateFn>;
+
+FunSep<T>: Vec<T> = {
+    <v:(<T> "}")*> <e:T?> => match e { // (2)
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+}
+
+Arguments: FnHead = {
+
+    Comma<Expr> => FnHead::Params(<>),
+}
+
+pub Params: FnHead = {
+    <CommaSepVec> => FnHead::Params(<>),
+}
+
+pub CommaSepVec = Comma<AssignParam>;
+
+Comma<T>: Vec<T> = {
+    <v:(<T> ",")*> <e:T?> => match e { // (2)
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+}
 
 StatementWhile: Box<ExprTree> = {
     "(" <BoolComp> ")" "{" <SeparateLines> => Box::new(ExprTree::WhileNode(<>)),
@@ -33,29 +96,46 @@ StatementIf: Box<ExprTree> = {
     "(" <NumComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
 }
 
+AssignParam: Box<ExprTree> = {
+    AssignVar VarType => Box::new(ExprTree::ParamNode(<>)),
+}
+
 pub Assign: Box<ExprTree> = {
-    AssignVar Type Expr => Box::new(ExprTree::AssignNode(<>)),
-    AssignVar Type BoolComp => Box::new(ExprTree::AssignNode(<>)),
-    AssignVar Type NumComp => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar VarType Expr => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar VarType BoolComp => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar VarType NumComp => Box::new(ExprTree::AssignNode(<>)),
 }
 
 AssignVar: Box<ExprTree> = {
     Var => Box::new(ExprTree::Var(<>)),
 }
 
-Type: Type ={
-    ": i32 =" => Type::I32,
-    ": bool =" => Type::Bool,
+FnType: FnHead = {
+    "i32" => FnHead::Return(Type::I32),
+    "bool" => FnHead::Return(Type::Bool),
+}
+
+VarType: Type ={
+    ": i32" "="? => Type::I32,
+    ": bool" "="? => Type::Bool,
 }
 
 pub BoolComp: Box<ExprTree> = {
     BoolComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
-    NumComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
-
-    NumComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
     BoolComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
 
-    BoolType
+    NumComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
+    NumComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
+
+    BoolComp BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
+    Expr BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
+    Expr BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
+
+    Expr BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
+    NumComp BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
+
+    BoolType,
+    
 }
 
 BoolType: Box<ExprTree> = {
@@ -85,7 +165,7 @@ NumCompOp: LogOp = {
 
 pub Expr: Box<ExprTree> = { 
     Expr ExprOp Factor => Box::new(ExprTree::BinNode(<>)),
-    Factor,
+    Factor, 
 };
 
 ExprOp: BinOp = {
@@ -107,6 +187,7 @@ FactorOp: BinOp = {
 Term: Box<ExprTree> = {
     Var => Box::new(ExprTree::Var(<>)),
     Num => Box::new(ExprTree::Number(<>)),
+    <FunctionCall>,
     "(" <Expr> ")",
 };
 

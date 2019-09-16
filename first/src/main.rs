@@ -1,6 +1,4 @@
-
 pub mod ast;
-
 
 
 #[macro_use] extern crate lalrpop_util;
@@ -21,7 +19,7 @@ fn main() {
 
     println!("{}", &input);
 
-    let set = parser::SeparateLinesParser::new().parse(&input).unwrap();
+    let set = parser::ProgramParser::new().parse(&input).unwrap();
 
     println!("{:#?}", set);  
 }
@@ -94,6 +92,13 @@ mod test{
                         Box::new(ExprTree::Bool(BoolType::True)),
                         LogOp::And,
                         Box::new(ExprTree::Bool(BoolType::False))
+                )));
+
+        assert_eq!(parser::BoolCompParser::new().parse("a || b").unwrap(), 
+                Box::new(ExprTree::LogNode(
+                        Box::new(ExprTree::Var("a".to_string())),
+                        LogOp::Or,
+                        Box::new(ExprTree::Var("b".to_string()))
                 )));
     }
 
@@ -245,4 +250,100 @@ mod test{
             )));
 
     }
+    #[test]
+    fn test_fun(){
+         assert_eq!(parser::ProgramParser::new().parse("fn test() -> i32{let a: i32 = 123;}").unwrap(),
+            vec!(Box::new(ExprTree::FnNode(
+                FnHead::Name("test".to_string()),
+                FnHead::Params(Vec::new()),
+                FnHead::Return(Type::I32),
+                Box::new(ExprTree::AssignNode(
+                    Box::new(ExprTree::Var("a".to_string())),
+                    Type::I32,
+                    Box::new(ExprTree::Number(123))
+                ))
+            ))
+        ));
+
+        assert_eq!(parser::ProgramParser::new().parse("fn test(a: i32, b: bool) -> i32{let a: i32 = 123;}").unwrap(),
+            vec!(Box::new(ExprTree::FnNode(
+                FnHead::Name("test".to_string()),
+                FnHead::Params(vec!(
+                    Box::new(ExprTree::ParamNode(
+                        Box::new(ExprTree::Var("a".to_string())),
+                        Type::I32
+                    )),
+                    Box::new(ExprTree::ParamNode(
+                        Box::new(ExprTree::Var("b".to_string())),
+                        Type::Bool
+                    )),
+
+                )),
+                FnHead::Return(Type::I32),
+                Box::new(ExprTree::AssignNode(
+                    Box::new(ExprTree::Var("a".to_string())),
+                    Type::I32,
+                    Box::new(ExprTree::Number(123))
+                ))
+            ))));
+
+        assert_eq!(parser::ProgramParser::new().parse("fn foo() -> i32{if(true){let a: i32 = 123; } } fn bar() -> i32{let a: i32 = 123; }").unwrap(),
+            vec![Box::new(ExprTree::FnNode(
+                FnHead::Name("foo".to_string()),
+                FnHead::Params(vec!()),
+                FnHead::Return(Type::I32),
+                Box::new(ExprTree::IfNode(
+                    Box::new(ExprTree::Bool(BoolType::True)),
+                    Box::new(ExprTree::AssignNode(
+                        Box::new(ExprTree::Var("a".to_string())),
+                        Type::I32,
+                        Box::new(ExprTree::Number(123))
+                        ))
+                    )
+                ))), 
+                Box::new(ExprTree::FnNode(
+                    FnHead::Name("bar".to_string()),
+                    FnHead::Params(vec!()),
+                    FnHead::Return(Type::I32),
+                    Box::new(ExprTree::AssignNode(
+                        Box::new(ExprTree::Var("a".to_string())),
+                        Type::I32,
+                        Box::new(ExprTree::Number(123))
+                    ))
+                )
+                )
+            ]);
+
+
+        assert_eq!(parser::ProgramParser::new().parse("fn foo() -> i32{a = bar(32); bar(123, a);}").unwrap(),
+            vec!(Box::new(ExprTree::FnNode(
+                FnHead::Name("foo".to_string()),
+                FnHead::Params(Vec::new()),
+                FnHead::Return(Type::I32),
+                Box::new(ExprTree::SeqNode(
+                    Box::new(ExprTree::SetVarNode(
+                        Box::new(ExprTree::Var("a".to_string())),
+                        Box::new(ExprTree::FunctionCall(
+                            FnHead::Name("bar".to_string()),
+                            FnHead::Params(vec!(Box::new(ExprTree::Number(32))))
+                        ))
+                    )),
+                    Box::new(ExprTree::FunctionCall(
+                            FnHead::Name("bar".to_string()),
+                            FnHead::Params(vec!(Box::new(ExprTree::Number(123)), Box::new(ExprTree::Var("a".to_string()))))
+                        ))
+                ))
+            ))
+        ));
+
+        assert_eq!(parser::ProgramParser::new().parse("fn test() -> i32{return 5;}").unwrap(),
+            vec!(Box::new(ExprTree::FnNode(
+                FnHead::Name("test".to_string()),
+                FnHead::Params(Vec::new()),
+                FnHead::Return(Type::I32),
+                Box::new(ExprTree::Return(Box::new(ExprTree::Number(5))))
+            ))
+        ));
+    }
+
 }

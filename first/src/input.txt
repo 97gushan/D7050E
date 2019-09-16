@@ -1,11 +1,5 @@
-if(true){ 
-    let a: i32 = 2;
+fn foo() -> i32{
+    a = 1 + bar(123);
+    
+    let a: i32 = (1 - 2)*3;
 }
-
-let c: i32 = 12;
-                
-if(false){
-    let b: i32 = 12;    
-}
-                
-let d: bool = true;
