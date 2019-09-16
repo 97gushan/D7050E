@@ -26,8 +26,19 @@ pub FindKeyword: Box<ExprTree> = {
     "while" <StatementWhile>,
 
     "pass" => Box::new(ExprTree::Pass), 
+
+    <v:Var> "=" <n:Num> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)), Box::new(ExprTree::Number(n)))),
+    <v:Var> "=" <f:FunctionCall> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)),f)),  
+    
+    <FunctionCall>,
+
+    "return" <Expr> => Box::new(ExprTree::Return(<>)), 
+
 }
 
+FunctionCall: Box<ExprTree> = {
+    <FnHead> "(" <Arguments> ")" => Box::new(ExprTree::FunctionCall(<>)),
+}
 
 StatementFn: Box<ExprTree> = {
     <FnHead> "(" <Params> ") -> " <FnType> "{" <SeparateLines> => Box::new(ExprTree::FnNode(<>)),
@@ -48,6 +59,11 @@ FunSep<T>: Vec<T> = {
             v
         }
     }
+}
+
+Arguments: FnHead = {
+
+    Comma<Expr> => FnHead::Params(<>),
 }
 
 pub Params: FnHead = {

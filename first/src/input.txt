@@ -1,9 +1,4 @@
 fn foo() -> i32{
-    if(true){
-        let a: bool = a;
-    }
-}
-
-fn bar() -> i32{
-    let a: bool = a;
+    a = bar(32);
+    bar(123, a);
 }
