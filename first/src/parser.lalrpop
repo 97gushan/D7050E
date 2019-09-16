@@ -3,8 +3,12 @@ use crate::ast::{ExprTree, BinOp, LogOp, BoolType, Type, FnHead};
 
 grammar;
 
+pub Program: Vec<Box<ExprTree>> = {
+    <FunSepVec> => <>,
+}
+
 pub SeparateFn: Box<ExprTree> = {
-    "fn" <StatementFn> "}" => <>,
+    "fn" <StatementFn>  => <>,
 }
 
 pub SeparateLines: Box<ExprTree> = {
@@ -31,6 +35,19 @@ StatementFn: Box<ExprTree> = {
 
 FnHead: FnHead = {
     Var => FnHead::Name(<>),
+}
+
+pub FunSepVec = FunSep<SeparateFn>;
+
+FunSep<T>: Vec<T> = {
+    <v:(<T> "}")*> <e:T?> => match e { // (2)
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
 }
 
 pub Params: FnHead = {
