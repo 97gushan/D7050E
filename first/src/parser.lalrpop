@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use crate::ast::{ExprTree, BinOp, LogOp, BoolType, Type, FnHead};
+use crate::ast::{ExprTree, BinOp, LogOp, NumCompOp, BoolType, Type, FnHead};
 
 grammar;
 
@@ -94,6 +94,10 @@ StatementIf: Box<ExprTree> = {
     "(" <NumComp> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
     "(" <NumComp> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
     "(" <NumComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
+
+    "(" <Expr> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <Expr> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <Expr> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
 }
 
 AssignParam: Box<ExprTree> = {
@@ -149,19 +153,19 @@ BoolOp: LogOp = {
 }
 
 NumComp: Box<ExprTree> = {
-    Expr NumCompOp Expr => Box::new(ExprTree::LogNode(<>)),
-    Expr NumCompOp BoolType => Box::new(ExprTree::LogNode(<>)),
-    BoolType NumCompOp Expr => Box::new(ExprTree::LogNode(<>)),
-    BoolType NumCompOp BoolType => Box::new(ExprTree::LogNode(<>)),
+    Expr NumCompOp Expr => Box::new(ExprTree::NumCompNode(<>)),
+    Expr NumCompOp BoolType => Box::new(ExprTree::NumCompNode(<>)),
+    BoolType NumCompOp Expr => Box::new(ExprTree::NumCompNode(<>)),
+    BoolType NumCompOp BoolType => Box::new(ExprTree::NumCompNode(<>)),
 }
 
-NumCompOp: LogOp = {
-    "<" => LogOp::Les,
-    ">" => LogOp::Gre,
-    "<=" => LogOp::LeEq,
-    ">=" => LogOp::GrEq,
-    "==" => LogOp::Eq,
-    "!=" => LogOp::NoEq,
+NumCompOp: NumCompOp = {
+    "<" => NumCompOp::Les,
+    ">" => NumCompOp::Gre,
+    "<=" => NumCompOp::LeEq,
+    ">=" => NumCompOp::GrEq,
+    "==" => NumCompOp::Eq,
+    "!=" => NumCompOp::NoEq,
 }
 
 
