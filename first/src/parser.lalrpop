@@ -150,6 +150,9 @@ BoolOp: LogOp = {
 
 pub NumComp: Box<ExprTree> = {
     Expr NumCompOp Expr => Box::new(ExprTree::LogNode(<>)),
+    Expr NumCompOp BoolType => Box::new(ExprTree::LogNode(<>)),
+    BoolType NumCompOp Expr => Box::new(ExprTree::LogNode(<>)),
+    BoolType NumCompOp BoolType => Box::new(ExprTree::LogNode(<>)),
 }
 
 NumCompOp: LogOp = {
