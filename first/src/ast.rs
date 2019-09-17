@@ -52,7 +52,6 @@ pub enum BinOp{
 pub enum LogOp{
     And,
     Or,
-    Not,
     Les,
     Gre,
     LeEq,

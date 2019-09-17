@@ -7,7 +7,7 @@ pub Program: Vec<Box<ExprTree>> = {
     <FunSepVec> => <>,
 }
 
-pub SeparateFn: Box<ExprTree> = {
+SeparateFn: Box<ExprTree> = {
     "fn" <StatementFn>  => <>,
 }
 
@@ -20,7 +20,7 @@ pub SeparateLines: Box<ExprTree> = {
      
 }
 
-pub FindKeyword: Box<ExprTree> = {
+FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
     "if" <StatementIf>,
     "while" <StatementWhile>,
@@ -47,7 +47,7 @@ FnHead: FnHead = {
     Var => FnHead::Name(<>),
 }
 
-pub FunSepVec = FunSep<SeparateFn>;
+FunSepVec = FunSep<SeparateFn>;
 
 FunSep<T>: Vec<T> = {
     <v:(<T> "}")*> <e:T?> => match e { // (2)
@@ -65,11 +65,11 @@ Arguments: FnHead = {
     Comma<Expr> => FnHead::Params(<>),
 }
 
-pub Params: FnHead = {
+Params: FnHead = {
     <CommaSepVec> => FnHead::Params(<>),
 }
 
-pub CommaSepVec = Comma<AssignParam>;
+CommaSepVec = Comma<AssignParam>;
 
 Comma<T>: Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e { // (2)
@@ -100,7 +100,7 @@ AssignParam: Box<ExprTree> = {
     AssignVar VarType => Box::new(ExprTree::ParamNode(<>)),
 }
 
-pub Assign: Box<ExprTree> = {
+Assign: Box<ExprTree> = {
     AssignVar VarType Expr => Box::new(ExprTree::AssignNode(<>)),
     AssignVar VarType BoolComp => Box::new(ExprTree::AssignNode(<>)),
     AssignVar VarType NumComp => Box::new(ExprTree::AssignNode(<>)),
@@ -148,7 +148,7 @@ BoolOp: LogOp = {
     "||" => LogOp::Or,
 }
 
-pub NumComp: Box<ExprTree> = {
+NumComp: Box<ExprTree> = {
     Expr NumCompOp Expr => Box::new(ExprTree::LogNode(<>)),
     Expr NumCompOp BoolType => Box::new(ExprTree::LogNode(<>)),
     BoolType NumCompOp Expr => Box::new(ExprTree::LogNode(<>)),
