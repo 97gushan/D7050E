@@ -1,16 +1,13 @@
-
-
-
-
-
 pub mod parser_mod{
     lalrpop_mod!(pub parser);
 
+
+    use crate::ast::*;
     use std::fs::File;
     use std::io;
     use std::io::prelude::*;
 
-    pub fn run_parser() {
+    pub fn run_parser() -> Vec<Box<ExprTree>>{
         let input: String;
 
         match read_src_file("src/input.txt"){
@@ -20,9 +17,10 @@ pub mod parser_mod{
 
         println!("{}", &input);
 
-        let set = parser::ProgramParser::new().parse(&input).unwrap();
+        //parser::ProgramParser::new().parse(&input).unwrap()
+        vec!(parser::ExprParser::new().parse(&input).unwrap())
+        
 
-        println!("{:#?}", set);  
     }
 
 
@@ -72,15 +70,15 @@ mod test{
 
         assert_eq!(parser::BoolCompParser::new().parse("1 == 2 || 5 > 4 - 1").unwrap(), 
                 Box::new(ExprTree::LogNode(
-                        Box::new(ExprTree::LogNode(
+                        Box::new(ExprTree::NumCompNode(
                             Box::new(ExprTree::Number(1)),
-                            LogOp::Eq,
+                            NumCompOp::Eq,
                             Box::new(ExprTree::Number(2))
                         )),
                         LogOp::Or,
-                        Box::new(ExprTree::LogNode(
+                        Box::new(ExprTree::NumCompNode(
                             Box::new(ExprTree::Number(5)),
-                            LogOp::Gre,
+                            NumCompOp::Gre,
                             Box::new(ExprTree::BinNode(
                                 Box::new(ExprTree::Number(4)),
                                 BinOp::Sub,
@@ -125,9 +123,9 @@ mod test{
                 Box::new(ExprTree::AssignNode(
                         Box::new(ExprTree::Var("b".to_string())),
                         Type::Bool,
-                        Box::new(ExprTree::LogNode(
+                        Box::new(ExprTree::NumCompNode(
                             Box::new(ExprTree::Number(1)),
-                            LogOp::GrEq,
+                            NumCompOp::GrEq,
                             Box::new(ExprTree::Number(5))
                         )))
             ));

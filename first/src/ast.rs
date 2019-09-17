@@ -1,5 +1,5 @@
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ExprTree{
     Number(i32),
     Bool(BoolType),
@@ -7,7 +7,9 @@ pub enum ExprTree{
 
     BinNode(Box<ExprTree>, BinOp, Box<ExprTree>),
     LogNode(Box<ExprTree>, LogOp, Box<ExprTree>),
+    NumCompNode(Box<ExprTree>, NumCompOp, Box<ExprTree>),
     
+
     AssignNode(Box<ExprTree>, Type, Box<ExprTree>),
     ParamNode(Box<ExprTree>, Type),
 
@@ -26,20 +28,20 @@ pub enum ExprTree{
     Return(Box<ExprTree>), 
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Type{
     I32,
     Bool
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum FnHead{
     Name(String),
     Params(Vec<Box<ExprTree>>),
     Return(Type),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum BinOp{
     Add,
     Sub,
@@ -47,11 +49,14 @@ pub enum BinOp{
     Mul 
 }
 
-
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum LogOp{
     And,
     Or,
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum NumCompOp{
     Les,
     Gre,
     LeEq,
@@ -60,7 +65,7 @@ pub enum LogOp{
     NoEq,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum BoolType{
     True,
     False,
