@@ -62,7 +62,7 @@ pub enum NumCompOp{
     LeEq,
     GrEq,
     Eq,
-    NoEq,
+    Neq,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

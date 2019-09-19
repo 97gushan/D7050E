@@ -152,7 +152,7 @@ BoolOp: LogOp = {
     "||" => LogOp::Or,
 }
 
-NumComp: Box<ExprTree> = {
+pub NumComp: Box<ExprTree> = {
     Expr NumCompOp Expr => Box::new(ExprTree::NumCompNode(<>)),
     Expr NumCompOp BoolType => Box::new(ExprTree::NumCompNode(<>)),
     BoolType NumCompOp Expr => Box::new(ExprTree::NumCompNode(<>)),
@@ -165,7 +165,7 @@ NumCompOp: NumCompOp = {
     "<=" => NumCompOp::LeEq,
     ">=" => NumCompOp::GrEq,
     "==" => NumCompOp::Eq,
-    "!=" => NumCompOp::NoEq,
+    "!=" => NumCompOp::Neq,
 }
 
 
