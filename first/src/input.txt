@@ -1,13 +1,5 @@
-fn foo() -> i32{
-    
-    if( a == 2 && true == true){
-        pass;
-    }
+let c: i32 = 12;
 
-}
+let a: i32 = 55;
 
-
-fn bar() -> i32{
-
-    pass;
-}
+print (c+a);
