@@ -1,5 +1,2 @@
-let c: i32 = 12;
 
-let a: i32 = 55;
-
-print (c+a);
+print(1 == 1 && true && (1 + 5 > 12));

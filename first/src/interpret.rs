@@ -54,8 +54,10 @@ pub mod interpreter{
         match *ast{
             ExprTree::Number(num) =>  IntRep::Number(num),
             ExprTree::Var(name) =>  IntRep::Var(name),
+            ExprTree::Bool(b) => IntRep::Bool(b),
             ExprTree::BinNode(l,op,r) =>  eval_bin_op(op, match_node(l), match_node(r)),
             ExprTree::NumCompNode(l,op,r) => eval_num_comp_op(op, match_node(l), match_node(r)),
+            ExprTree::LogNode(l, op, r) => eval_bool_comp_op(op, match_node(l), match_node(r)),
             ExprTree::SeqNode(l, r) => {match_node(l); match_node(r); IntRep::NewLine},
             ExprTree::Print(s) => {println!("{:#?}", match_node(s)); IntRep::NewLine},
             ExprTree::AssignNode(n, t, val) => assign_var(t, match_node(n), match_node(val)),
@@ -86,11 +88,53 @@ pub mod interpreter{
         IntRep::NewLine
     }
 
-    fn eval_bool_comp_op(op: NumCompOp, l: bool, r: bool) -> bool{
+    fn eval_bool_comp_op(op: LogOp, l: IntRep, r: IntRep) -> IntRep{
+        let left: bool;
+        let right: bool;
+
+        match l {
+            IntRep::Bool(b) => {left = b;},
+            IntRep::Var(name) => {
+                let map = MEMORY.lock().unwrap();
+
+                match map.get(&*name){
+                    Some(b) => {if b != &0{
+                        left = true;
+                    }else{
+                        left = false;
+                    }},
+                    None => {panic!("Can't read var");}
+                }
+            },
+            _ => {
+                panic!("Error Not a number".to_string())
+            }
+        }
+        
+        match r {
+            IntRep::Bool(b) => {right = b;},
+            IntRep::Var(name) => {
+                let map = MEMORY.lock().unwrap();
+
+                match map.get(&*name){
+                    Some(b) => {if b != &0{
+                        right = true;
+                    }else{
+                        right = false;
+                    }},
+                    None => {panic!("Can't read var");}
+                }
+            },
+            _ => {
+                panic!("Error Not a Bool".to_string())
+            }
+        }
+
         match op{
-            NumCompOp::Eq => (l == r),
-            NumCompOp::Neq => (l != r),
-            _ => false
+            LogOp::And => IntRep::Bool(left && right),
+            LogOp::Or => IntRep::Bool(left || right),
+            _ => panic!("Error Can't compare bools".to_string())
+
         }
     }
 
@@ -133,7 +177,7 @@ pub mod interpreter{
         match l {
             IntRep::Number(num) => {left = num;},
             IntRep::Var(name) => {
-                let mut map = MEMORY.lock().unwrap();
+                let map = MEMORY.lock().unwrap();
 
                 match map.get(&*name){
                     Some(num) => {left = *num},
@@ -148,7 +192,7 @@ pub mod interpreter{
             IntRep::Number(num) => {right = num;},
             IntRep::Var(name) => {
                 
-                let mut map = MEMORY.lock().unwrap();
+                let map = MEMORY.lock().unwrap();
 
                 match map.get(&*name){
                     Some(num) => {right = *num},

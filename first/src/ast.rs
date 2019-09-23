@@ -2,7 +2,7 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum ExprTree{
     Number(i32),
-    Bool(BoolType),
+    Bool(bool),
     Var(String),
 
     BinNode(Box<ExprTree>, BinOp, Box<ExprTree>),

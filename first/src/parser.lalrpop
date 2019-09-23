@@ -33,7 +33,11 @@ pub FindKeyword: Box<ExprTree> = {
 
     "return" <Expr> => Box::new(ExprTree::Return(<>)), 
 
+    "print" <BoolComp> => Box::new(ExprTree::Print(<>)),
+    "print" <NumComp> => Box::new(ExprTree::Print(<>)),
+ 
     "print" <Expr> => Box::new(ExprTree::Print(<>)),
+
 
 }
 
@@ -147,8 +151,8 @@ pub BoolComp: Box<ExprTree> = {
 }
 
 BoolType: Box<ExprTree> = {
-    "true" => Box::new(ExprTree::Bool(BoolType::True)),
-    "false" => Box::new(ExprTree::Bool(BoolType::False)),
+    "true" => Box::new(ExprTree::Bool(true)),
+    "false" => Box::new(ExprTree::Bool(false)),
 }
 
 BoolOp: LogOp = {
