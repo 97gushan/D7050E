@@ -26,6 +26,7 @@ pub enum ExprTree{
 
     Pass,
     Return(Box<ExprTree>), 
+    Print(Box<ExprTree>),
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

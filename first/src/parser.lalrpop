@@ -20,7 +20,7 @@ pub SeparateLines: Box<ExprTree> = {
      
 }
 
-FindKeyword: Box<ExprTree> = {
+pub FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
     "if" <StatementIf>,
     "while" <StatementWhile>,
@@ -32,6 +32,8 @@ FindKeyword: Box<ExprTree> = {
     <FunctionCall>,
 
     "return" <Expr> => Box::new(ExprTree::Return(<>)), 
+
+    "print" <Expr> => Box::new(ExprTree::Print(<>)),
 
 }
 
@@ -138,6 +140,8 @@ pub BoolComp: Box<ExprTree> = {
     Expr BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
     NumComp BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
 
+    "(" <BoolComp> ")",
+
     BoolType,
     
 }
@@ -157,6 +161,7 @@ pub NumComp: Box<ExprTree> = {
     Expr NumCompOp BoolType => Box::new(ExprTree::NumCompNode(<>)),
     BoolType NumCompOp Expr => Box::new(ExprTree::NumCompNode(<>)),
     BoolType NumCompOp BoolType => Box::new(ExprTree::NumCompNode(<>)),
+    "(" <NumComp> ")"
 }
 
 NumCompOp: NumCompOp = {
