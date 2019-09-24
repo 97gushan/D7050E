@@ -66,12 +66,36 @@ pub mod interpreter{
                 }
             }
             ExprTree::SetVarNode(n, val) => assign_existing_var(n, val),
-                
+            ExprTree::IfNode(c, b) => eval_if_statement(match_node(c), b),
+            ExprTree::IfElseNode(c, bi, be) => eval_if_else_statement(match_node(c), bi, be),
             _ => {
                 panic!("ERROR: Cant match node")
             }
         }
     }  
+
+
+    fn eval_if_statement(comp: IntRep, if_branch: Box<ExprTree>) -> IntRep{
+        if let IntRep::Bool(c) = comp {
+            if(c){
+                match_node(if_branch);
+            }
+        }
+
+        IntRep::NewLine
+    }
+
+    fn eval_if_else_statement(comp: IntRep, if_branch: Box<ExprTree>, else_branch: Box<ExprTree>) -> IntRep{
+        if let IntRep::Bool(c) = comp {
+            if(c){
+                match_node(if_branch);
+            }else{
+                match_node(else_branch);
+            }
+        }
+
+        IntRep::NewLine
+    }
 
     fn assign_existing_var(n: Box<ExprTree>, val: Box<ExprTree>) -> IntRep{
         match *n{
@@ -126,16 +150,12 @@ pub mod interpreter{
 
         match l {
             IntRep::Bool(b) => {left = b;},
-            _ => {
-                panic!("ERROR: Left expression not bool")
-            }
+            _ => panic!("ERROR: Left expression not bool")
         }
         
         match r {
             IntRep::Bool(b) => {right = b;},
-            _ => {
-                panic!("ERROR: Right expression not bool")
-            }
+            _ => panic!("ERROR: Right expression not bool")
         }
 
         match op{
@@ -150,17 +170,13 @@ pub mod interpreter{
         let right: i32;
 
         match l {
-            IntRep::Number(num) => {left = num;},
-            _ => {
-                panic!("ERROR: Left expression not a number")
-            }
+            IntRep::Number(num) => left = num,
+            _ => panic!("ERROR: Left expression not a number")
         }
 
         match r {
-            IntRep::Number(num) => {right = num;},
-            _ => {
-                panic!("ERROR: Right expression not a number")
-            }
+            IntRep::Number(num) => right = num,
+            _ => panic!("ERROR: Right expression not a number")
         }
 
         match op{
@@ -180,13 +196,13 @@ pub mod interpreter{
 
 
         match l {
-            IntRep::Number(num) => {left = num;},
-            _ => {panic!("ERROR: Left expression is not a number");}
+            IntRep::Number(num) => left = num,
+            _ => panic!("ERROR: Left expression is not a number")
         }
 
         match r {
-            IntRep::Number(num) => {right = num;},
-            _ => {panic!("ERROR: Right expression is not a number");}
+            IntRep::Number(num) => right = num,
+            _ => panic!("ERROR: Right expression is not a number")
         }
 
         match op{
