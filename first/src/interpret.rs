@@ -10,8 +10,8 @@ pub mod interpreter{
     use std::sync::Mutex;
 
     lazy_static!{
-        static ref MEMORY: Mutex<HashMap<&'static str, i32>> = {
-            let mut m = HashMap::new();
+        static ref MEMORY: Mutex<HashMap<&'static str, IntRep>> = {
+            let m = HashMap::new();
             
             Mutex::new(m)
         };
@@ -23,7 +23,6 @@ pub mod interpreter{
         Number(i32),
         Var(String),
         Bool(bool),
-        Error(String),
         NewLine,
     }
 
@@ -36,7 +35,7 @@ pub mod interpreter{
 
         //println!("{:#?}", map.get("a"));
 
-        for i in 0..len{
+        for _i in 0..len{
             match ast.pop(){
                 Some(e) => {
                     match_node(e);
@@ -53,36 +52,49 @@ pub mod interpreter{
     fn match_node(ast: Box<ExprTree>) -> IntRep {
         match *ast{
             ExprTree::Number(num) =>  IntRep::Number(num),
-            ExprTree::Var(name) =>  IntRep::Var(name),
+            ExprTree::Var(name) =>  read_from_var(&name),
             ExprTree::Bool(b) => IntRep::Bool(b),
             ExprTree::BinNode(l,op,r) =>  eval_bin_op(op, match_node(l), match_node(r)),
             ExprTree::NumCompNode(l,op,r) => eval_num_comp_op(op, match_node(l), match_node(r)),
             ExprTree::LogNode(l, op, r) => eval_bool_comp_op(op, match_node(l), match_node(r)),
             ExprTree::SeqNode(l, r) => {match_node(l); match_node(r); IntRep::NewLine},
             ExprTree::Print(s) => {println!("{:#?}", match_node(s)); IntRep::NewLine},
-            ExprTree::AssignNode(n, t, val) => assign_var(t, match_node(n), match_node(val)),
+            ExprTree::AssignNode(n, _t, val) => {
+                match *n{
+                    ExprTree::Var(name) => assign_var(IntRep::Var(name), match_node(val)),
+                    _ => panic!("ERROR: Can't get variable name to assign")
+                }
+            }
             _ => {
-                IntRep::Error("Cant match node".to_string())
+                panic!("ERROR: Cant match node")
             }
         }
     }
 
+    fn read_from_var(name: &str) -> IntRep{
+        let map = MEMORY.lock().unwrap();
 
-    fn assign_var(var_type: Type, name: IntRep, val: IntRep) -> IntRep{
-        let value;
-        
-        match val{
-            IntRep::Number(n) => value = n,
-            _ => panic!("Can't assign to bad value")
+        match map.get(&*name){
+            Some(var) => {
+                match var{
+                    IntRep::Number(num) => IntRep::Number(*num), 
+                    IntRep::Bool(b) => IntRep::Bool(*b),
+                    _ => panic!("ERROR: Var is not i32 or bool")
+                }
+            },
+            None => {panic!("ERROR: Can't read var");}
         }
+    }
+
+    fn assign_var(name: IntRep, val: IntRep) -> IntRep{
         
         match name{
             IntRep::Var(n) => {
                 let mut map = MEMORY.lock().unwrap();
                 
-                map.insert(Box::leak(n.into_boxed_str()), value);                
+                map.insert(Box::leak(n.into_boxed_str()), val);                
             },
-            _ => panic!("Can't assign to var")
+            _ => panic!("ERROR: Can't assign to var")
         }
 
         IntRep::NewLine
@@ -94,47 +106,21 @@ pub mod interpreter{
 
         match l {
             IntRep::Bool(b) => {left = b;},
-            IntRep::Var(name) => {
-                let map = MEMORY.lock().unwrap();
-
-                match map.get(&*name){
-                    Some(b) => {if b != &0{
-                        left = true;
-                    }else{
-                        left = false;
-                    }},
-                    None => {panic!("Can't read var");}
-                }
-            },
             _ => {
-                panic!("Error Not a number".to_string())
+                panic!("ERROR: Left expression not bool")
             }
         }
         
         match r {
             IntRep::Bool(b) => {right = b;},
-            IntRep::Var(name) => {
-                let map = MEMORY.lock().unwrap();
-
-                match map.get(&*name){
-                    Some(b) => {if b != &0{
-                        right = true;
-                    }else{
-                        right = false;
-                    }},
-                    None => {panic!("Can't read var");}
-                }
-            },
             _ => {
-                panic!("Error Not a Bool".to_string())
+                panic!("ERROR: Right expression not bool")
             }
         }
 
         match op{
             LogOp::And => IntRep::Bool(left && right),
             LogOp::Or => IntRep::Bool(left || right),
-            _ => panic!("Error Can't compare bools".to_string())
-
         }
     }
 
@@ -146,14 +132,14 @@ pub mod interpreter{
         match l {
             IntRep::Number(num) => {left = num;},
             _ => {
-                panic!("Error Not a number".to_string())
+                panic!("ERROR: Left expression not a number")
             }
         }
 
         match r {
             IntRep::Number(num) => {right = num;},
             _ => {
-                panic!("Error Not a number".to_string())
+                panic!("ERROR: Right expression not a number")
             }
         }
 
@@ -164,7 +150,6 @@ pub mod interpreter{
             NumCompOp::GrEq => IntRep::Bool(left >= right),
             NumCompOp::Eq => IntRep::Bool(left == right),
             NumCompOp::Neq => IntRep::Bool(left != right),
-            _ => IntRep::Error("Can't do comparison".to_string())
         }
     }
 
@@ -176,30 +161,12 @@ pub mod interpreter{
 
         match l {
             IntRep::Number(num) => {left = num;},
-            IntRep::Var(name) => {
-                let map = MEMORY.lock().unwrap();
-
-                match map.get(&*name){
-                    Some(num) => {left = *num},
-                    None => {panic!("Can't read var");}
-                }
-
-            },
-            _ => {panic!("Left: Not a number");}
+            _ => {panic!("ERROR: Left expression is not a number");}
         }
 
         match r {
             IntRep::Number(num) => {right = num;},
-            IntRep::Var(name) => {
-                
-                let map = MEMORY.lock().unwrap();
-
-                match map.get(&*name){
-                    Some(num) => {right = *num},
-                    None => {panic!("Can't read var");}
-                }
-            },
-            _ => {panic!("Right: Not a number");}
+            _ => {panic!("ERROR: Right expression is not a number");}
         }
 
         match op{
