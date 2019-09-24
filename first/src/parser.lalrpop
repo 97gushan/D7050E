@@ -84,7 +84,7 @@ Comma<T>: Vec<T> = {
 }
 
 StatementWhile: Box<ExprTree> = {
-    "(" <BoolComp> ")" "{" <SeparateLines> => Box::new(ExprTree::WhileNode(<>)),
+    "(" <ChooseExpr> ")" "{" <SeparateLines> => Box::new(ExprTree::WhileNode(<>)),
 }
 
 StatementIf: Box<ExprTree> = {

@@ -55,8 +55,8 @@ pub mod interpreter{
             ExprTree::Var(name) =>  read_from_var(&name),
             ExprTree::Bool(b) => IntRep::Bool(b),
             ExprTree::BinNode(l,op,r) =>  eval_bin_op(op, match_node(l), match_node(r)),
-            ExprTree::NumCompNode(l,op,r) => eval_num_comp_op(op, match_node(l), match_node(r)),
-            ExprTree::LogNode(l, op, r) => eval_bool_comp_op(op, match_node(l), match_node(r)),
+            ExprTree::NumCompNode(l,op,r) => eval_comp_op(op, match_node(l), match_node(r)),
+            ExprTree::LogNode(l, op, r) => eval_bool_log_op(op, match_node(l), match_node(r)),
             ExprTree::SeqNode(l, r) => {match_node(l); match_node(r); IntRep::NewLine},
             ExprTree::Print(s) => {println!("{:#?}", match_node(s)); IntRep::NewLine},
             ExprTree::AssignNode(n, _t, val) => {
@@ -68,16 +68,33 @@ pub mod interpreter{
             ExprTree::SetVarNode(n, val) => assign_existing_var(n, val),
             ExprTree::IfNode(c, b) => eval_if_statement(match_node(c), b),
             ExprTree::IfElseNode(c, bi, be) => eval_if_else_statement(match_node(c), bi, be),
+            ExprTree::WhileNode(c, b) => eval_while(c, b),
             _ => {
                 panic!("ERROR: Cant match node")
             }
         }
     }  
 
+    fn get_bool_from_enum(comp: IntRep) -> bool{
+        match comp{
+            IntRep::Bool(b) => b,
+            _ => panic!("ERROR: Value is not bool")
+        }
+    }
+
+    fn eval_while(comp: Box<ExprTree>, while_branch: Box<ExprTree>) -> IntRep{
+
+
+        while get_bool_from_enum(match_node(comp.clone())){
+            match_node(while_branch.clone());
+        }
+        
+        IntRep::NewLine
+    }
 
     fn eval_if_statement(comp: IntRep, if_branch: Box<ExprTree>) -> IntRep{
         if let IntRep::Bool(c) = comp {
-            if(c){
+            if c{
                 match_node(if_branch);
             }
         }
@@ -87,7 +104,7 @@ pub mod interpreter{
 
     fn eval_if_else_statement(comp: IntRep, if_branch: Box<ExprTree>, else_branch: Box<ExprTree>) -> IntRep{
         if let IntRep::Bool(c) = comp {
-            if(c){
+            if c{
                 match_node(if_branch);
             }else{
                 match_node(else_branch);
@@ -184,7 +201,7 @@ pub mod interpreter{
 
 
 
-        }
+    }
 
     fn eval_bool_comp_op(op: NumCompOp, l: bool, r: bool) -> IntRep{
         match op{
@@ -192,7 +209,7 @@ pub mod interpreter{
             NumCompOp::Neq => IntRep::Bool(l != r),
             _ => panic!("ERROR: Can't do compare operator on bool")
         }
-        }
+    }
 
     fn eval_num_comp_op(op: NumCompOp, l: i32, r: i32) -> IntRep{
         match op{

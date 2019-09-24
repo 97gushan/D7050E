@@ -1,15 +1,6 @@
-if(false){
+
+if( true != false || true == true){
     print(1);
-}else if(false){
-    print(2);
 }else{
-    print(3);
-
-    if(false){
-        print(4);
-
-    }else{
-        print(5);
-    }
-
+    print(2);
 }
