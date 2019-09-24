@@ -144,7 +144,7 @@ pub mod interpreter{
         IntRep::NewLine
     }
 
-    fn eval_bool_comp_op(op: LogOp, l: IntRep, r: IntRep) -> IntRep{
+    fn eval_bool_log_op(op: LogOp, l: IntRep, r: IntRep) -> IntRep{
         let left: bool;
         let right: bool;
 
@@ -164,28 +164,44 @@ pub mod interpreter{
         }
     }
 
-    fn eval_num_comp_op(op: NumCompOp, l: IntRep, r: IntRep) -> IntRep{
+    fn eval_comp_op(op: NumCompOp, l: IntRep, r: IntRep) -> IntRep{
 
-        let left: i32;
-        let right: i32;
-
-        match l {
-            IntRep::Number(num) => left = num,
-            _ => panic!("ERROR: Left expression not a number")
+        if let IntRep::Number(l_num) = l{
+            if let IntRep::Number(r_num) = r{
+                eval_num_comp_op(op, l_num, r_num)
+            }else{
+                panic!("ERROR: Rightside bool tries to compare to Leftside i32");
+            }
+        }else if let IntRep::Bool(l_bool) = l{
+            if let IntRep::Bool(r_bool) = r{
+                eval_bool_comp_op(op, l_bool, r_bool)
+            }else{
+                panic!("ERROR: Rightside i32 tries to compare to Leftside bool");
+            }
+        }else{
+            panic!("ERROR: Unexpedted types on compare operation");
         }
 
-        match r {
-            IntRep::Number(num) => right = num,
-            _ => panic!("ERROR: Right expression not a number")
+
+
         }
 
+    fn eval_bool_comp_op(op: NumCompOp, l: bool, r: bool) -> IntRep{
         match op{
-            NumCompOp::Les => IntRep::Bool(left < right),
-            NumCompOp::Gre => IntRep::Bool(left > right),
-            NumCompOp::LeEq => IntRep::Bool(left <= right),
-            NumCompOp::GrEq => IntRep::Bool(left >= right),
-            NumCompOp::Eq => IntRep::Bool(left == right),
-            NumCompOp::Neq => IntRep::Bool(left != right),
+            NumCompOp::Eq => IntRep::Bool(l == r),
+            NumCompOp::Neq => IntRep::Bool(l != r),
+            _ => panic!("ERROR: Can't do compare operator on bool")
+        }
+        }
+
+    fn eval_num_comp_op(op: NumCompOp, l: i32, r: i32) -> IntRep{
+        match op{
+            NumCompOp::Les => IntRep::Bool(l < r),
+            NumCompOp::Gre => IntRep::Bool(l > r),
+            NumCompOp::LeEq => IntRep::Bool(l <= r),
+            NumCompOp::GrEq => IntRep::Bool(l >= r),
+            NumCompOp::Eq => IntRep::Bool(l == r),
+            NumCompOp::Neq => IntRep::Bool(l != r),
         }
     }
 
