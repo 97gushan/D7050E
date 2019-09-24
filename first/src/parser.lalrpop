@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use crate::ast::{ExprTree, BinOp, LogOp, NumCompOp, BoolType, Type, FnHead};
+use crate::ast::{ExprTree, BinOp, LogOp, NumCompOp, Type, FnHead};
 
 grammar;
 
@@ -20,25 +20,20 @@ pub SeparateLines: Box<ExprTree> = {
      
 }
 
-pub FindKeyword: Box<ExprTree> = {
+FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
     "if" <StatementIf>,
     "while" <StatementWhile>,
 
     "pass" => Box::new(ExprTree::Pass), 
 
-    <v:Var> "=" <e:Expr> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)), e)),
-        
+    <v:Var> "=" <c:ChooseExpr> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)), c)),
+
     <FunctionCall>,
 
     "return" <Expr> => Box::new(ExprTree::Return(<>)), 
 
-    "print" <BoolComp> => Box::new(ExprTree::Print(<>)),
-    "print" <NumComp> => Box::new(ExprTree::Print(<>)),
- 
-    "print" <Expr> => Box::new(ExprTree::Print(<>)),
-
-
+    "print" <ChooseExpr> => Box::new(ExprTree::Print(<>)),
 }
 
 FunctionCall: Box<ExprTree> = {
@@ -93,27 +88,18 @@ StatementWhile: Box<ExprTree> = {
 }
 
 StatementIf: Box<ExprTree> = {
-    "(" <BoolComp> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <BoolComp> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <BoolComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
+    "(" <ChooseExpr> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <ChooseExpr> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <ChooseExpr> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
 
-    "(" <NumComp> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <NumComp> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <NumComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
-
-    "(" <Expr> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <Expr> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <Expr> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
-}
+    }
 
 AssignParam: Box<ExprTree> = {
     AssignVar VarType => Box::new(ExprTree::ParamNode(<>)),
 }
 
 Assign: Box<ExprTree> = {
-    AssignVar VarType Expr => Box::new(ExprTree::AssignNode(<>)),
-    AssignVar VarType BoolComp => Box::new(ExprTree::AssignNode(<>)),
-    AssignVar VarType NumComp => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar VarType ChooseExpr => Box::new(ExprTree::AssignNode(<>)),
 }
 
 AssignVar: Box<ExprTree> = {
@@ -128,6 +114,12 @@ FnType: FnHead = {
 VarType: Type ={
     ": i32" "="? => Type::I32,
     ": bool" "="? => Type::Bool,
+}
+
+ChooseExpr : Box<ExprTree> = {
+    BoolComp,
+    NumComp,
+    Expr,
 }
 
 pub BoolComp: Box<ExprTree> = {
@@ -160,7 +152,7 @@ BoolOp: LogOp = {
     "||" => LogOp::Or,
 }
 
-pub NumComp: Box<ExprTree> = {
+NumComp: Box<ExprTree> = {
     Expr NumCompOp Expr => Box::new(ExprTree::NumCompNode(<>)),
     Expr NumCompOp BoolType => Box::new(ExprTree::NumCompNode(<>)),
     BoolType NumCompOp Expr => Box::new(ExprTree::NumCompNode(<>)),
