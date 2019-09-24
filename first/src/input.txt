@@ -1,9 +1,10 @@
 let a: i32 = 123 + 10;
 
-let b: bool = true;
+let b: bool = true && a > 100;
 
-print(a  * 2);
+print(a);
 
-print(b);
+a = 2;
 
-print(a < 100 && false);
+print(a+2);
+print (b);

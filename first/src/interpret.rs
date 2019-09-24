@@ -65,9 +65,29 @@ pub mod interpreter{
                     _ => panic!("ERROR: Can't get variable name to assign")
                 }
             }
+            ExprTree::SetVarNode(n, val) => assign_existing_var(n, val),
+                
             _ => {
                 panic!("ERROR: Cant match node")
             }
+        }
+    }  
+
+    fn assign_existing_var(n: Box<ExprTree>, val: Box<ExprTree>) -> IntRep{
+        match *n{
+            ExprTree::Var(name) => {
+
+                let value = match_node(val);
+                let saved_value = read_from_var(&name);
+
+                // check if types match
+                if std::mem::discriminant(&value) == std::mem::discriminant(&saved_value){
+                    assign_var(IntRep::Var(name), value)
+                }else{
+                    panic!("ERROR: can't assign to var, different types");
+                }
+            },
+            _ => panic!("ERROR: Can't get variable name to assign")
         }
     }
 
