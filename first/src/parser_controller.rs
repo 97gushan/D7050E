@@ -66,7 +66,7 @@ mod test{
     
     #[test]
     fn test_bool(){
-        assert_eq!(parser::BoolCompParser::new().parse("true").unwrap(), Box::new(ExprTree::Bool(BoolType::True)));
+        assert_eq!(parser::BoolCompParser::new().parse("true").unwrap(), Box::new(ExprTree::Bool(true)));
 
         assert_eq!(parser::BoolCompParser::new().parse("1 == 2 || 5 > 4 - 1").unwrap(), 
                 Box::new(ExprTree::LogNode(
@@ -89,9 +89,9 @@ mod test{
 
         assert_eq!(parser::BoolCompParser::new().parse("true && false").unwrap(), 
                 Box::new(ExprTree::LogNode(
-                        Box::new(ExprTree::Bool(BoolType::True)),
+                        Box::new(ExprTree::Bool(true)),
                         LogOp::And,
-                        Box::new(ExprTree::Bool(BoolType::False))
+                        Box::new(ExprTree::Bool(false))
                 )));
 
         assert_eq!(parser::BoolCompParser::new().parse("a || b").unwrap(), 
@@ -115,7 +115,7 @@ mod test{
                 Box::new(ExprTree::AssignNode(
                         Box::new(ExprTree::Var("b".to_string())),
                         Type::Bool,
-                        Box::new(ExprTree::Bool(BoolType::True)))
+                        Box::new(ExprTree::Bool(true)))
             ));
 
 
@@ -143,7 +143,7 @@ mod test{
                         Box::new(ExprTree::AssignNode(
                             Box::new(ExprTree::Var("b".to_string())),
                             Type::Bool,
-                            Box::new(ExprTree::Bool(BoolType::False))
+                            Box::new(ExprTree::Bool(false))
                         ))
 
             ))
@@ -154,7 +154,7 @@ mod test{
     fn test_if(){
         assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;}").unwrap(), 
                 Box::new(ExprTree::IfNode(
-                    Box::new(ExprTree::Bool(BoolType::True)),
+                    Box::new(ExprTree::Bool(true)),
                     Box::new(ExprTree::AssignNode(
                         Box::new(ExprTree::Var("a".to_string())),
                         Type::I32,
@@ -164,7 +164,7 @@ mod test{
 
         assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;}else{let a: i32 = 2;}").unwrap(), 
                 Box::new(ExprTree::IfElseNode(
-                    Box::new(ExprTree::Bool(BoolType::True)),
+                    Box::new(ExprTree::Bool(true)),
                     Box::new(ExprTree::AssignNode(
                         Box::new(ExprTree::Var("a".to_string())),
                         Type::I32,
@@ -179,21 +179,21 @@ mod test{
 
         assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;}else if(false){let a: i32 = 2;}else if(true){let a: i32 = 2;}").unwrap(), 
                 Box::new(ExprTree::IfElseNode(
-                    Box::new(ExprTree::Bool(BoolType::True)),
+                    Box::new(ExprTree::Bool(true)),
                     Box::new(ExprTree::AssignNode(
                         Box::new(ExprTree::Var("a".to_string())),
                         Type::I32,
                         Box::new(ExprTree::Number(2))
                     )),
                     Box::new(ExprTree::IfElseNode(
-                        Box::new(ExprTree::Bool(BoolType::False)),
+                        Box::new(ExprTree::Bool(false)),
                         Box::new(ExprTree::AssignNode(
                             Box::new(ExprTree::Var("a".to_string())),
                             Type::I32,
                             Box::new(ExprTree::Number(2))
                         )),
                         Box::new(ExprTree::IfNode(
-                            Box::new(ExprTree::Bool(BoolType::True)),
+                            Box::new(ExprTree::Bool(true)),
                             Box::new(ExprTree::AssignNode(
                                 Box::new(ExprTree::Var("a".to_string())),
                                 Type::I32,
@@ -206,7 +206,7 @@ mod test{
         assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ let a: i32 = 2;} let b: i32 = 123;").unwrap(), 
                 Box::new(ExprTree::SeqNode(
                     Box::new(ExprTree::IfNode(
-                        Box::new(ExprTree::Bool(BoolType::True)),
+                        Box::new(ExprTree::Bool(true)),
                         Box::new(ExprTree::AssignNode(
                             Box::new(ExprTree::Var("a".to_string())),
                             Type::I32,
@@ -222,9 +222,9 @@ mod test{
 
                 assert_eq!(parser::SeparateLinesParser::new().parse("if(true){ if(true){let a: i32 = 123;}}").unwrap(), 
                     Box::new(ExprTree::IfNode(
-                        Box::new(ExprTree::Bool(BoolType::True)),
+                        Box::new(ExprTree::Bool(true)),
                         Box::new(ExprTree::IfNode(
-                            Box::new(ExprTree::Bool(BoolType::True)),
+                            Box::new(ExprTree::Bool(true)),
                             Box::new(ExprTree::AssignNode(
                                 Box::new(ExprTree::Var("a".to_string())),
                                 Type::I32,
@@ -241,7 +241,7 @@ mod test{
 
         assert_eq!(parser::SeparateLinesParser::new().parse("while(true){let a: i32 = 2;}").unwrap(),
             Box::new(ExprTree::WhileNode(
-                Box::new(ExprTree::Bool(BoolType::True)),
+                Box::new(ExprTree::Bool(true)),
                 Box::new(ExprTree::AssignNode(
                     Box::new(ExprTree::Var("a".to_string())),
                     Type::I32,
@@ -293,7 +293,7 @@ mod test{
                 FnHead::Params(vec!()),
                 FnHead::Return(Type::I32),
                 Box::new(ExprTree::IfNode(
-                    Box::new(ExprTree::Bool(BoolType::True)),
+                    Box::new(ExprTree::Bool(true)),
                     Box::new(ExprTree::AssignNode(
                         Box::new(ExprTree::Var("a".to_string())),
                         Type::I32,

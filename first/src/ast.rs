@@ -1,19 +1,19 @@
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ExprTree{
-    Number(i32),
-    Bool(bool),
-    Var(String),
+    Number(i32),    // 
+    Bool(bool),     //
+    Var(String),    //
 
-    BinNode(Box<ExprTree>, BinOp, Box<ExprTree>),
-    LogNode(Box<ExprTree>, LogOp, Box<ExprTree>),
-    NumCompNode(Box<ExprTree>, NumCompOp, Box<ExprTree>),
+    BinNode(Box<ExprTree>, BinOp, Box<ExprTree>),   //
+    LogNode(Box<ExprTree>, LogOp, Box<ExprTree>),   //
+    NumCompNode(Box<ExprTree>, NumCompOp, Box<ExprTree>),   //
     
 
-    AssignNode(Box<ExprTree>, Type, Box<ExprTree>),
+    AssignNode(Box<ExprTree>, Type, Box<ExprTree>), //
     ParamNode(Box<ExprTree>, Type),
 
-    SeqNode(Box<ExprTree>, Box<ExprTree>),
+    SeqNode(Box<ExprTree>, Box<ExprTree>),  //
     
     IfNode(Box<ExprTree>, Box<ExprTree>),
     IfElseNode(Box<ExprTree>, Box<ExprTree>, Box<ExprTree>),
@@ -26,7 +26,7 @@ pub enum ExprTree{
 
     Pass,
     Return(Box<ExprTree>), 
-    Print(Box<ExprTree>),
+    Print(Box<ExprTree>),   //
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -66,8 +66,3 @@ pub enum NumCompOp{
     Neq,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
-pub enum BoolType{
-    True,
-    False,
-}
