@@ -18,23 +18,25 @@ pub mod interpreter {
         Number(i32),
         Var(String),
         Bool(bool),
+        Function(Vec<Box<ExprTree>>, Type, ExprTree),
+        Undefined(Type),
+
         NewLine,
     }
 
     pub fn run(mut ast: Vec<Box<ExprTree>>) {
         let len = ast.len();
 
-        //println!("{:#?}", map.get("a"));
-
         for _i in 0..len {
             match ast.pop() {
-                Some(e) => {
-                    match_node(e);
-                    //println!("{:#?}", match_node(e, &MEMORY));
+                Some(fun) => {
+                    match_node(fun);
                 }
                 None => panic!("Fuuuck"),
             }
         }
+
+        call_function("main".to_string(), Vec::new());
     }
 
     fn match_node(ast: Box<ExprTree>) -> IntRep {
@@ -62,8 +64,95 @@ pub mod interpreter {
             ExprTree::IfNode(c, b) => eval_if_statement(match_node(c), b),
             ExprTree::IfElseNode(c, bi, be) => eval_if_else_statement(match_node(c), bi, be),
             ExprTree::WhileNode(c, b) => eval_while(c, b),
+            ExprTree::FnNode(n, p, r, b) => eval_function(n, p, r, *b),
+            ExprTree::ParamNode(n, t) => match *n {
+                ExprTree::Var(name) => assign_var(IntRep::Var(name), IntRep::Undefined(t)),
+                _ => panic!("ERROR: Can't get variable name to assign"),
+            },
+            ExprTree::FunctionCall(n, p) => call_function(get_function_name(n), get_function_params(p)),
+                
             _ => panic!("ERROR: Cant match node"),
         }
+    }
+
+    /**
+     * Takes a function and stores it in the hashmap
+     */
+    fn eval_function(fun_name: FnHead, fun_params: FnHead, fun_return : FnHead, b: ExprTree) -> IntRep{
+        
+        let name = get_function_name(fun_name);
+        let params = get_function_params(fun_params);
+        let return_type = get_function_return_type(fun_return);
+
+        let mut map = MEMORY.lock().unwrap();
+
+        // insert the function into the hashmap
+        map.insert(Box::leak(name.into_boxed_str()), IntRep::Function(params, return_type, b));
+
+        IntRep::NewLine        
+    }
+
+    /**
+     * Takes a function name and returns the ExprTree branch and params of that function
+     */
+    fn read_function(name: String) -> (ExprTree, Vec<Box<ExprTree>>){
+        let map = MEMORY.lock().unwrap();
+
+        println!("function call {}", name);
+
+        match map.get(&*name) {
+            Some(fun) => match fun {
+                IntRep::Function(p, _r, b) => {
+                    
+                    // return the branch and the params
+                    (b.clone(), p.clone())    
+                },
+                _ => panic!("ERROR: Can't read function"),
+            },
+            None => {
+                panic!("ERROR: No function with the name: {} ", name);
+            }
+        }
+    }
+
+    /**
+     * Takes a function name and a vector of args
+     * and calls the named function and stores the args
+     * as variables in the hashmap
+     */
+    fn call_function(name: String, args: Vec<Box<ExprTree>>) -> IntRep {
+
+        let (branch, params) = read_function(name);
+
+
+
+        if params.len() != args.len(){
+            panic!("ERROR: Wrong amount of arguments. Expected {} found {}", params.len(), args.len());
+        }
+
+        for i in 0..params.len(){
+
+            let name;
+            let val;
+
+            match &*(params[i]){
+                ExprTree::ParamNode(n, _t) => {
+                    match &**n{
+                        ExprTree::Var(na) => name = IntRep::Var(na.to_string()),
+                        _ => panic!("ERROR: Value is not a variable"),
+                    };
+                },
+                _ => panic!("ERROR: Value is not a parameter"),
+            }
+
+            val = match_node(args[i].clone());
+
+            assign_var(name, val);
+        }
+        match_node(Box::new(branch.clone()));
+
+        IntRep::NewLine
+
     }
 
     fn get_bool_from_enum(comp: IntRep) -> bool {
@@ -129,6 +218,7 @@ pub mod interpreter {
             Some(var) => match var {
                 IntRep::Number(num) => IntRep::Number(*num),
                 IntRep::Bool(b) => IntRep::Bool(*b),
+                IntRep::Undefined(t) => IntRep::Undefined(*t),
                 _ => panic!("ERROR: Var is not i32 or bool"),
             },
             None => {
@@ -141,7 +231,6 @@ pub mod interpreter {
         match name {
             IntRep::Var(n) => {
                 let mut map = MEMORY.lock().unwrap();
-
                 map.insert(Box::leak(n.into_boxed_str()), val);
             }
             _ => panic!("ERROR: Can't assign to var"),
@@ -229,6 +318,27 @@ pub mod interpreter {
             BinOp::Sub => IntRep::Number(left - right),
             BinOp::Mul => IntRep::Number(left * right),
             BinOp::Div => IntRep::Number(left / right),
+        }
+    }
+
+    fn get_function_name(fun_name: FnHead) -> String{
+        match fun_name{
+            FnHead::Name(n) => n,
+            _ => panic!("ERROR: Can't read function name"), 
+        }
+    }
+
+    fn get_function_params(fun_params: FnHead) -> Vec<Box<ExprTree>>{
+        match fun_params{
+            FnHead::Params(p) => p,
+            _ => panic!("ERROR: Can't read function params")
+        }
+    }
+
+    fn get_function_return_type(fun_return: FnHead) -> Type{
+        match fun_return{
+            FnHead::Return(r) => r,
+            _ => panic!("ERROR: Can't read function return type")
         }
     }
 }

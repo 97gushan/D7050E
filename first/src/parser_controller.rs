@@ -17,10 +17,8 @@ pub mod parser_mod{
 
         println!("{}", &input);
 
-        //parser::ProgramParser::new().parse(&input).unwrap()
-        vec!(parser::SeparateLinesParser::new().parse(&input).unwrap())
-        
-
+        parser::ProgramParser::new().parse(&input).unwrap()
+        // vec!(parser::ProgramParser::new().parse(&input).unwrap())
     }
 
 

@@ -63,7 +63,7 @@ FunSep<T>: Vec<T> = {
 
 Arguments: FnHead = {
 
-    Comma<Expr> => FnHead::Params(<>),
+    Comma<ChooseExpr> => FnHead::Params(<>),
 }
 
 Params: FnHead = {
