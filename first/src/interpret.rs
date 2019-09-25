@@ -90,11 +90,10 @@ pub mod interpreter {
         IntRep::NewLine
     }
 
-    fn eval_if_else_statement(
-        comp: IntRep,
-        if_branch: Box<ExprTree>,
-        else_branch: Box<ExprTree>,
-    ) -> IntRep {
+    fn eval_if_else_statement(comp: IntRep, 
+                              if_branch: Box<ExprTree>, 
+                              else_branch: Box<ExprTree>,) 
+                              -> IntRep {
         if let IntRep::Bool(c) = comp {
             if c {
                 match_node(if_branch);

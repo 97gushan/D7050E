@@ -41,8 +41,6 @@ mod test{
 
     use super::*;
 
-    use crate::ast::*;
-
     #[test]
     fn test_expr(){
 
