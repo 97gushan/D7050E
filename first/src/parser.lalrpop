@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use crate::ast::{ExprTree, BinOp, LogOp, NumCompOp, BoolType, Type, FnHead};
+use crate::ast::{ExprTree, BinOp, LogOp, NumCompOp, Type, FnHead};
 
 grammar;
 
@@ -27,12 +27,13 @@ FindKeyword: Box<ExprTree> = {
 
     "pass" => Box::new(ExprTree::Pass), 
 
-    <v:Var> "=" <e:Expr> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)), e)),
-        
+    <v:Var> "=" <c:ChooseExpr> => Box::new(ExprTree::SetVarNode(Box::new(ExprTree::Var(v)), c)),
+
     <FunctionCall>,
 
     "return" <Expr> => Box::new(ExprTree::Return(<>)), 
 
+    "print" <ChooseExpr> => Box::new(ExprTree::Print(<>)),
 }
 
 FunctionCall: Box<ExprTree> = {
@@ -62,7 +63,7 @@ FunSep<T>: Vec<T> = {
 
 Arguments: FnHead = {
 
-    Comma<Expr> => FnHead::Params(<>),
+    Comma<ChooseExpr> => FnHead::Params(<>),
 }
 
 Params: FnHead = {
@@ -83,31 +84,22 @@ Comma<T>: Vec<T> = {
 }
 
 StatementWhile: Box<ExprTree> = {
-    "(" <BoolComp> ")" "{" <SeparateLines> => Box::new(ExprTree::WhileNode(<>)),
+    "(" <ChooseExpr> ")" "{" <SeparateLines> => Box::new(ExprTree::WhileNode(<>)),
 }
 
 StatementIf: Box<ExprTree> = {
-    "(" <BoolComp> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <BoolComp> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <BoolComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
+    "(" <ChooseExpr> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <ChooseExpr> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
+    "(" <ChooseExpr> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
 
-    "(" <NumComp> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <NumComp> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <NumComp> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
-
-    "(" <Expr> ")" "{" <SeparateLines> "}else if" <StatementIf> => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <Expr> ")" "{" <SeparateLines> "}else{" <SeparateLines>  => Box::new(ExprTree::IfElseNode(<>)),
-    "(" <Expr> ")" "{" <SeparateLines>  => Box::new(ExprTree::IfNode(<>)),
-}
+    }
 
 AssignParam: Box<ExprTree> = {
     AssignVar VarType => Box::new(ExprTree::ParamNode(<>)),
 }
 
 Assign: Box<ExprTree> = {
-    AssignVar VarType Expr => Box::new(ExprTree::AssignNode(<>)),
-    AssignVar VarType BoolComp => Box::new(ExprTree::AssignNode(<>)),
-    AssignVar VarType NumComp => Box::new(ExprTree::AssignNode(<>)),
+    AssignVar VarType ChooseExpr => Box::new(ExprTree::AssignNode(<>)),
 }
 
 AssignVar: Box<ExprTree> = {
@@ -124,6 +116,12 @@ VarType: Type ={
     ": bool" "="? => Type::Bool,
 }
 
+ChooseExpr : Box<ExprTree> = {
+    BoolComp,
+    NumComp,
+    Expr,
+}
+
 pub BoolComp: Box<ExprTree> = {
     BoolComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
     BoolComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
@@ -138,13 +136,15 @@ pub BoolComp: Box<ExprTree> = {
     Expr BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
     NumComp BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
 
+    "(" <BoolComp> ")",
+
     BoolType,
     
 }
 
 BoolType: Box<ExprTree> = {
-    "true" => Box::new(ExprTree::Bool(BoolType::True)),
-    "false" => Box::new(ExprTree::Bool(BoolType::False)),
+    "true" => Box::new(ExprTree::Bool(true)),
+    "false" => Box::new(ExprTree::Bool(false)),
 }
 
 BoolOp: LogOp = {
@@ -157,6 +157,7 @@ NumComp: Box<ExprTree> = {
     Expr NumCompOp BoolType => Box::new(ExprTree::NumCompNode(<>)),
     BoolType NumCompOp Expr => Box::new(ExprTree::NumCompNode(<>)),
     BoolType NumCompOp BoolType => Box::new(ExprTree::NumCompNode(<>)),
+    "(" <NumComp> ")"
 }
 
 NumCompOp: NumCompOp = {
@@ -165,7 +166,7 @@ NumCompOp: NumCompOp = {
     "<=" => NumCompOp::LeEq,
     ">=" => NumCompOp::GrEq,
     "==" => NumCompOp::Eq,
-    "!=" => NumCompOp::NoEq,
+    "!=" => NumCompOp::Neq,
 }
 
 
