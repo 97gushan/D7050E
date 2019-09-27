@@ -7,10 +7,10 @@ pub mod parser_mod{
     use std::io;
     use std::io::prelude::*;
 
-    pub fn run_parser() -> Vec<Box<ExprTree>>{
+    pub fn run_parser(src: &str) -> Vec<Box<ExprTree>>{
         let input: String;
 
-        match read_src_file("src/input.txt"){
+        match read_src_file(src){
             Ok(content) => input = content,
             Err(_error) => input = String::from("")
         }
@@ -18,9 +18,7 @@ pub mod parser_mod{
         println!("{}", &input);
 
         parser::ProgramParser::new().parse(&input).unwrap()
-        // vec!(parser::ProgramParser::new().parse(&input).unwrap())
     }
-
 
 
     fn read_src_file(src_path: &str) -> io::Result<(String)>{

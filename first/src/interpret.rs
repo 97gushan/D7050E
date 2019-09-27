@@ -11,9 +11,24 @@ pub mod interpreter {
             let m = HashMap::new();
             Mutex::new(m)
         };
+
+        static ref SCOPE: Mutex<Vec<Mutex<HashMap<&'static str, IntRep>>>> = {
+            let s = Vec::new();
+            Mutex::new(s)
+        };
+
+        static ref FUNCTION_MAP: Mutex<HashMap<&'static str, IntRep>> = {
+            let f = HashMap::new();
+            Mutex::new(f)
+        };
+
+        static ref STACK: Mutex<Vec<IntRep>> = {
+            let s = Vec::new();
+            Mutex::new(s)
+        };
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     enum IntRep {
         Number(i32),
         Var(String),
@@ -70,7 +85,7 @@ pub mod interpreter {
                 _ => panic!("ERROR: Can't get variable name to assign"),
             },
             ExprTree::FunctionCall(n, p) => call_function(get_function_name(n), get_function_params(p)),
-                
+            ExprTree::Return(e) => return_function(match_node(e)),
             _ => panic!("ERROR: Cant match node"),
         }
     }
@@ -81,10 +96,10 @@ pub mod interpreter {
     fn eval_function(fun_name: FnHead, fun_params: FnHead, fun_return : FnHead, b: ExprTree) -> IntRep{
         
         let name = get_function_name(fun_name);
-        let params = get_function_params(fun_params);
+        let params = get_function_params_expr(fun_params);
         let return_type = get_function_return_type(fun_return);
 
-        let mut map = MEMORY.lock().unwrap();
+        let mut map = FUNCTION_MAP.lock().unwrap();
 
         // insert the function into the hashmap
         map.insert(Box::leak(name.into_boxed_str()), IntRep::Function(params, return_type, b));
@@ -96,7 +111,7 @@ pub mod interpreter {
      * Takes a function name and returns the ExprTree branch and params of that function
      */
     fn read_function(name: String) -> (ExprTree, Vec<Box<ExprTree>>){
-        let map = MEMORY.lock().unwrap();
+        let map = FUNCTION_MAP.lock().unwrap();
 
         println!("function call {}", name);
 
@@ -115,25 +130,58 @@ pub mod interpreter {
         }
     }
 
+    fn push_on_return_stack(val: IntRep){
+        let mut stack = STACK.lock().unwrap();
+        stack.push(val);
+    }
+
+    fn pop_from_return_stack() -> IntRep{
+        let mut stack = STACK.lock().unwrap();
+        match stack.pop(){
+            Some(i) => i,
+            None => IntRep::NewLine
+        }
+    }
+
+    /**
+     * Push a memory scope
+     */
+    fn push_on_mem_stack(){
+        let mut stack = SCOPE.lock().unwrap();
+
+        stack.push(Mutex::new(HashMap::new()));
+    }
+
+    /**
+     * Pop a memory scope
+     */
+    fn pop_from_mem_stack(){
+        let mut stack = SCOPE.lock().unwrap();
+
+        stack.pop();
+    }
+
     /**
      * Takes a function name and a vector of args
      * and calls the named function and stores the args
      * as variables in the hashmap
      */
-    fn call_function(name: String, args: Vec<Box<ExprTree>>) -> IntRep {
+    fn call_function(name: String, args: Vec<IntRep>) -> IntRep {
 
+        // create a new scope
+        push_on_mem_stack();
+
+        // get branch and params from the functions
         let (branch, params) = read_function(name);
-
-
 
         if params.len() != args.len(){
             panic!("ERROR: Wrong amount of arguments. Expected {} found {}", params.len(), args.len());
         }
 
+        // assign the params as variables with the values from the args
         for i in 0..params.len(){
 
             let name;
-            let val;
 
             match &*(params[i]){
                 ExprTree::ParamNode(n, _t) => {
@@ -145,14 +193,18 @@ pub mod interpreter {
                 _ => panic!("ERROR: Value is not a parameter"),
             }
 
-            val = match_node(args[i].clone());
-
-            assign_var(name, val);
+            assign_var(name, args[i].clone());
         }
+
         match_node(Box::new(branch.clone()));
 
-        IntRep::NewLine
+        pop_from_mem_stack();
+        pop_from_return_stack()
+    }
 
+    fn return_function(return_val: IntRep) -> IntRep{
+        push_on_return_stack(return_val);
+        IntRep::NewLine
     }
 
     fn get_bool_from_enum(comp: IntRep) -> bool {
@@ -212,26 +264,41 @@ pub mod interpreter {
     }
 
     fn read_from_var(name: &str) -> IntRep {
-        let map = MEMORY.lock().unwrap();
+        let scope = SCOPE.lock().unwrap();
 
-        match map.get(&*name) {
-            Some(var) => match var {
-                IntRep::Number(num) => IntRep::Number(*num),
-                IntRep::Bool(b) => IntRep::Bool(*b),
-                IntRep::Undefined(t) => IntRep::Undefined(*t),
-                _ => panic!("ERROR: Var is not i32 or bool"),
-            },
-            None => {
-                panic!("ERROR: Can't read var");
-            }
+        match scope.last(){
+            Some(m) => {
+                let map = m.lock().unwrap();
+                match map.get(&*name) {
+                    Some(var) => match var {
+                        IntRep::Number(num) => IntRep::Number(*num),
+                        IntRep::Bool(b) => IntRep::Bool(*b),
+                        IntRep::Undefined(t) => IntRep::Undefined(*t),
+                        _ => panic!("ERROR: Var is not i32 or bool"),
+                    },
+                    None => {
+                        panic!("ERROR: Var not found in scope");
+                    }
+                }
+            }, 
+                
+            None => panic!("ERROR: No scope found"),
         }
     }
 
-    fn assign_var(name: IntRep, val: IntRep) -> IntRep {
+    fn assign_var(name: IntRep, val: IntRep) -> IntRep {        
         match name {
             IntRep::Var(n) => {
-                let mut map = MEMORY.lock().unwrap();
-                map.insert(Box::leak(n.into_boxed_str()), val);
+                let scope = SCOPE.lock().unwrap();
+
+                match scope.last(){
+                    Some(m) => {
+                        let mut map = m.lock().unwrap();
+                        map.insert(Box::leak(n.into_boxed_str()), val);
+                    },
+                        
+                    None => {panic!("ERROR: No scope found");},
+                }
             }
             _ => panic!("ERROR: Can't assign to var"),
         }
@@ -328,11 +395,24 @@ pub mod interpreter {
         }
     }
 
-    fn get_function_params(fun_params: FnHead) -> Vec<Box<ExprTree>>{
+    fn get_function_params_expr(fun_params: FnHead) -> Vec<Box<ExprTree>>{
         match fun_params{
             FnHead::Params(p) => p,
             _ => panic!("ERROR: Can't read function params")
         }
+    }
+
+    fn get_function_params(fun_params: FnHead) -> Vec<IntRep>{
+        let params = get_function_params_expr(fun_params);
+
+        let mut params_int = Vec::new();
+
+        for item in &params{
+            params_int.push(match_node(item.clone()));
+        }
+
+        params_int
+
     }
 
     fn get_function_return_type(fun_return: FnHead) -> Type{

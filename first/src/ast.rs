@@ -11,7 +11,7 @@ pub enum ExprTree{
     
 
     AssignNode(Box<ExprTree>, Type, Box<ExprTree>), //
-    ParamNode(Box<ExprTree>, Type),
+    ParamNode(Box<ExprTree>, Type), //
 
     SeqNode(Box<ExprTree>, Box<ExprTree>),  //
     
@@ -19,13 +19,13 @@ pub enum ExprTree{
     IfElseNode(Box<ExprTree>, Box<ExprTree>, Box<ExprTree>),    //
 
     WhileNode(Box<ExprTree>, Box<ExprTree>),    //
-    FnNode(FnHead, FnHead, FnHead, Box<ExprTree>),
+    FnNode(FnHead, FnHead, FnHead, Box<ExprTree>),  //
 
     SetVarNode(Box<ExprTree>, Box<ExprTree>),   //
-    FunctionCall(FnHead, FnHead),
+    FunctionCall(FnHead, FnHead),   //
 
-    Pass,
-    Return(Box<ExprTree>), 
+    Pass,   //
+    Return(Box<ExprTree>),  //
     Print(Box<ExprTree>),   //
 }
 

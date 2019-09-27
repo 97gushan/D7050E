@@ -14,7 +14,7 @@ use crate::interpret::interpreter;
 
 fn main(){
 
-    let ast = parser_mod::run_parser();
+    let ast = parser_mod::run_parser("src/input.rs");
     println!("{:#?}", ast);
     interpreter::run(ast);
 }
