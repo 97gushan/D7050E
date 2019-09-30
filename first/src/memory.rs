@@ -11,6 +11,8 @@ pub mod memory_handler{
         Function(Vec<Box<ExprTree>>, Type, ExprTree),
         Undefined(Type),
 
+        TypeError,
+
         NewLine,
     }
 
@@ -110,11 +112,14 @@ pub mod memory_handler{
         match scope.last(){
             Some(m) => {
                 let map = m.lock().unwrap();
+
+                println!("{:#?}", map);
                 match map.get(&*name) {
                     Some(var) => match var {
                         IntRep::Number(num) => IntRep::Number(*num),
                         IntRep::Bool(b) => IntRep::Bool(*b),
                         IntRep::Undefined(t) => IntRep::Undefined(*t),
+                        IntRep::Var(name) => read_from_var(name),
                         _ => panic!("ERROR: Var is not i32 or bool"),
                     },
                     None => {
