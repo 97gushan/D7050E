@@ -310,17 +310,12 @@ pub mod interpreter {
         let left: bool;
         let right: bool;
 
-        match l {
-            IntRep::Bool(b) => {
-                left = b;
+        match (l, r) {
+            (IntRep::Bool(l_bool), IntRep::Bool(r_bool)) => {
+                left = l_bool;
+                right = r_bool;
             }
-            _ => panic!("ERROR: Left expression not bool"),
-        }
-        match r {
-            IntRep::Bool(b) => {
-                right = b;
-            }
-            _ => panic!("ERROR: Right expression not bool"),
+            _ => panic!("ERROR: Missmatched types on bool operation"),
         }
 
         match op {
@@ -330,20 +325,12 @@ pub mod interpreter {
     }
 
     fn eval_comp_op(op: NumCompOp, l: IntRep, r: IntRep) -> IntRep {
-        if let IntRep::Number(l_num) = l {
-            if let IntRep::Number(r_num) = r {
-                eval_num_comp_op(op, l_num, r_num)
-            } else {
-                panic!("ERROR: Rightside bool tries to compare to Leftside i32");
-            }
-        } else if let IntRep::Bool(l_bool) = l {
-            if let IntRep::Bool(r_bool) = r {
-                eval_bool_comp_op(op, l_bool, r_bool)
-            } else {
-                panic!("ERROR: Rightside i32 tries to compare to Leftside bool");
-            }
-        } else {
-            panic!("ERROR: Unexpedted types on compare operation");
+
+        match(l, r){
+            (IntRep::Number(l_num), IntRep::Number(r_num)) => eval_num_comp_op(op, l_num, r_num),
+            (IntRep::Bool(l_bool), IntRep::Bool(r_bool)) => eval_bool_comp_op(op, l_bool, r_bool),
+            _ => panic!("ERROR: Missmatched types on compare operation"),
+
         }
     }
 
@@ -370,14 +357,12 @@ pub mod interpreter {
         let left: i32;
         let right: i32;
 
-        match l {
-            IntRep::Number(num) => left = num,
+        match (l, r) {
+            (IntRep::Number(left_num), IntRep::Number(right_num)) => {
+                left = left_num;
+                right = right_num;
+            },
             _ => panic!("ERROR: Left expression is not a number"),
-        }
-
-        match r {
-            IntRep::Number(num) => right = num,
-            _ => panic!("ERROR: Right expression is not a number"),
         }
 
         match op {
