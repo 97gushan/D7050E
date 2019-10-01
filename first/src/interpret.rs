@@ -26,6 +26,7 @@ pub mod interpreter {
             // types
             ExprTree::Number(num) => IntRep::Number(num),
             ExprTree::Var(name) => memory_handler::read_from_var(&name),
+            ExprTree::Const(val) => IntRep::Const(Box::new(match_node(val))),
             ExprTree::Bool(b) => IntRep::Bool(b),
             
             // Expressions
@@ -181,7 +182,7 @@ pub mod interpreter {
                 } else {
                     panic!("ERROR: can't assign to var, different types");
                 }
-            }
+            },
             _ => panic!("ERROR: Can't get variable name to assign"),
         }
     }

@@ -4,6 +4,7 @@ pub enum ExprTree{
     Number(i32),    // 
     Bool(bool),     //
     Var(String),    //
+    Const(Box<ExprTree>),    //
 
     BinNode(Box<ExprTree>, BinOp, Box<ExprTree>),   //
     LogNode(Box<ExprTree>, LogOp, Box<ExprTree>),   //

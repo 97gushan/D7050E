@@ -24,7 +24,7 @@ pub mod checker {
         }
         
         match call_function("main".to_string(), Vec::new()){
-            IntRep::TypeError => false,
+            IntRep::TypeError(e) => false,
             _ => true
         }
     }
@@ -37,6 +37,8 @@ pub mod checker {
             ExprTree::Var(n) => memory_handler::read_from_var(&n),
             ExprTree::Number(_) => IntRep::Number(0),
             ExprTree::Bool(_) => IntRep::Bool(false),
+            ExprTree::Const(val) => IntRep::Const(Box::new(match_node(val))),
+
             
             // expressions of different kinds
             ExprTree::BinNode(l, _op, r) => eval_bin_node(match_node(l), match_node(r)),
@@ -129,7 +131,7 @@ pub mod checker {
             match (&args[i], var_type){
                 (IntRep::Number(_), Type::I32) => {memory_handler::assign_var(name, args[i].clone());},
                 (IntRep::Bool(_), Type::Bool) =>  {memory_handler::assign_var(name, args[i].clone());},
-                _ => arg_type_checker = IntRep::TypeError
+                _ => arg_type_checker = IntRep::TypeError("ERROR: params and args type does not match".to_string())
             }
         }
 
@@ -140,9 +142,9 @@ pub mod checker {
 
         // if there is a TypeError anywhere in the function, return a TypeError
         match (&function_type, &return_type, &arg_type_checker){
-            (IntRep::TypeError, _, _) => IntRep::TypeError,
-            (_, IntRep::TypeError, _) => IntRep::TypeError,
-            (_, _, IntRep::TypeError) => IntRep::TypeError,
+            (IntRep::TypeError(e), _, _) => IntRep::TypeError(e.to_string()),
+            (_, IntRep::TypeError(e), _) => IntRep::TypeError(e.to_string()),
+            (_, _, IntRep::TypeError(e)) => IntRep::TypeError(e.to_string()),
             _ => function_type,
         }
     }
@@ -156,16 +158,16 @@ pub mod checker {
             memory_handler::push_on_return_stack(return_val.clone());
             return_val
         }else{
-            IntRep::TypeError
+            IntRep::TypeError("ERROR: Wrong return type".to_string())
         }  
     }
 
     // evaluate conditions with one branches like if and while
     fn eval_cond_branch(c: IntRep, b: IntRep) -> IntRep{
         match (c, b){
-            (IntRep::TypeError, _) => IntRep::TypeError,
-            (IntRep::Number(_), _) => IntRep::TypeError,
-            (_, IntRep::TypeError) => IntRep::TypeError,
+            (IntRep::TypeError(e), _) => IntRep::TypeError(e),
+            (IntRep::Number(_), _) => IntRep::TypeError("ERROR: Wrong type in condition".to_string()),
+            (_, IntRep::TypeError(e)) => IntRep::TypeError(e),
             _ => IntRep::NewLine,
         }
     }
@@ -173,18 +175,18 @@ pub mod checker {
     // evaluate conditions with multiple branches like if/else
     fn eval_cond_mult_branch(c: IntRep, b1: IntRep, b2: IntRep) -> IntRep{
         match (c, b1, b2){
-            (IntRep::TypeError, _, _) => IntRep::TypeError,
-            (IntRep::Number(_), _, _) => IntRep::TypeError,
-            (_, IntRep::TypeError, _) => IntRep::TypeError,
-            (_, _,IntRep::TypeError) => IntRep::TypeError,
+            (IntRep::TypeError(e), _, _) => IntRep::TypeError(e),
+            (IntRep::Number(_), _, _) => IntRep::TypeError("ERROR: Wrong type in condition".to_string()),
+            (_, IntRep::TypeError(e), _) => IntRep::TypeError(e),
+            (_, _,IntRep::TypeError(e)) => IntRep::TypeError(e),
             _ => IntRep::NewLine,
         }
     }
 
     fn eval_seq_node(l: IntRep, r: IntRep) -> IntRep{
         match (l, r){
-            (IntRep::TypeError, _) => IntRep::TypeError,
-            (_, IntRep::TypeError) => IntRep::TypeError,
+            (IntRep::TypeError(e), _) => IntRep::TypeError(e),
+            (_, IntRep::TypeError(e)) => IntRep::TypeError(e),
             _ => IntRep::NewLine,
         }
     }
@@ -195,12 +197,19 @@ pub mod checker {
                 let value = match_node(val);
                 let saved_value = memory_handler::read_from_var(&name);
 
-                // check if types match
-                if std::mem::discriminant(&value) == std::mem::discriminant(&saved_value) {
-                    memory_handler::assign_var(IntRep::Var(name), value)
-                } else {
-                    IntRep::TypeError
+                match saved_value{
+                    IntRep::Const(_) => IntRep::TypeError("ERROR: Can't assign to new value to constant".to_string()),
+                    _ => {
+                        // check if types match
+                        if std::mem::discriminant(&value) == std::mem::discriminant(&saved_value) {
+                            memory_handler::assign_var(IntRep::Var(name), value)
+                        } else {
+                            IntRep::TypeError("ERROR: Can't assign value to variable, wrong type".to_string())
+                        }
+                    }
                 }
+
+                
             }
             _ => panic!("ERROR: Can't get variable name to assign"),
         }
@@ -214,7 +223,15 @@ pub mod checker {
         match (&value, t){
             (IntRep::Number(_), Type::I32) => assign_var(name, value),
             (IntRep::Bool(_), Type::Bool) => assign_var(name, value),
-            _ => IntRep::TypeError
+            (IntRep::Const(var), _) => {
+                match ((**var).clone(), t){
+                    (IntRep::Number(_), Type::I32) => assign_var(name, value),
+                    (IntRep::Bool(_), Type::Bool) => assign_var(name, value),
+                    _ => IntRep::TypeError("ERROR: Can't assign to var".to_string())
+                
+                }
+            }
+            _ => IntRep::TypeError("ERROR: Can't assign to var".to_string())
         }   
     }
 
@@ -229,7 +246,7 @@ pub mod checker {
         if std::mem::discriminant(&l) == std::mem::discriminant(&r) {
             IntRep::Number(0)
         }else{
-            IntRep::TypeError
+            IntRep::TypeError("ERROR: missmatch types in binary operation".to_string())
         }
     }
 
@@ -237,7 +254,7 @@ pub mod checker {
         if std::mem::discriminant(&l) == std::mem::discriminant(&r) {
             IntRep::Bool(true)
         }else{
-            IntRep::TypeError
+            IntRep::TypeError("ERROR: missmatch types in compare operation".to_string())
         }
     }
 
@@ -245,7 +262,7 @@ pub mod checker {
         if std::mem::discriminant(&l) == std::mem::discriminant(&r) {
             IntRep::Bool(true)
         }else{
-            IntRep::TypeError
+            IntRep::TypeError("ERROR: missmatch types in boolean operation".to_string())
         }
     }
 
