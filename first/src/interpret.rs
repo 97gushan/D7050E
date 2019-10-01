@@ -6,7 +6,7 @@ pub mod interpreter {
 
     use crate::memory::memory_handler::IntRep;
 
-    pub fn run(mut ast: Vec<Box<ExprTree>>) {
+    pub fn run(mut ast: Vec<Box<ExprTree>>) -> IntRep{
         let len = ast.len();
 
         for _i in 0..len {
@@ -18,17 +18,43 @@ pub mod interpreter {
             }
         }
 
-        call_function("main".to_string(), Vec::new());
+        call_function("main".to_string(), Vec::new())
     }
 
     fn match_node(ast: Box<ExprTree>) -> IntRep {
         match *ast {
+            // types
             ExprTree::Number(num) => IntRep::Number(num),
             ExprTree::Var(name) => memory_handler::read_from_var(&name),
             ExprTree::Bool(b) => IntRep::Bool(b),
+            
+            // Expressions
             ExprTree::BinNode(l, op, r) => eval_bin_op(op, match_node(l), match_node(r)),
             ExprTree::NumCompNode(l, op, r) => eval_comp_op(op, match_node(l), match_node(r)),
             ExprTree::LogNode(l, op, r) => eval_bool_log_op(op, match_node(l), match_node(r)),
+           
+            // variables
+            ExprTree::AssignNode(n, _t, val) => match *n {
+                ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), match_node(val)),
+                _ => panic!("ERROR: Can't get variable name to assign"),
+            },
+            ExprTree::SetVarNode(n, val) => assign_existing_var(n, val),
+            
+            // conditions
+            ExprTree::IfNode(c, b) => eval_if_statement(match_node(c), b),
+            ExprTree::IfElseNode(c, bi, be) => eval_if_else_statement(match_node(c), bi, be),
+            ExprTree::WhileNode(c, b) => eval_while(c, b),
+            
+            // functions
+            ExprTree::FnNode(n, p, r, b) => eval_function(n, p, r, *b),
+            ExprTree::ParamNode(n, t) => match *n {
+                ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), IntRep::Undefined(t)),
+                _ => panic!("ERROR: Can't get variable name to assign"),
+            },
+            ExprTree::FunctionCall(n, p) => call_function(get_function_name(n), get_function_params(p)),
+            ExprTree::Return(e) => return_function(match_node(e)),
+
+            
             ExprTree::SeqNode(l, r) => {
                 match_node(l);
                 match_node(r);
@@ -38,22 +64,7 @@ pub mod interpreter {
                 println!("{:#?}", match_node(s));
                 IntRep::NewLine
             }
-            ExprTree::AssignNode(n, _t, val) => match *n {
-                ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), match_node(val)),
-                _ => panic!("ERROR: Can't get variable name to assign"),
-            },
-            ExprTree::SetVarNode(n, val) => assign_existing_var(n, val),
-            ExprTree::IfNode(c, b) => eval_if_statement(match_node(c), b),
-            ExprTree::IfElseNode(c, bi, be) => eval_if_else_statement(match_node(c), bi, be),
-            ExprTree::WhileNode(c, b) => eval_while(c, b),
-            ExprTree::FnNode(n, p, r, b) => eval_function(n, p, r, *b),
-            ExprTree::ParamNode(n, t) => match *n {
-                ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), IntRep::Undefined(t)),
-                _ => panic!("ERROR: Can't get variable name to assign"),
-            },
-            ExprTree::FunctionCall(n, p) => call_function(get_function_name(n), get_function_params(p)),
-            ExprTree::Return(e) => return_function(match_node(e)),
-            _ => panic!("ERROR: Cant match node"),
+            ExprTree::Pass => IntRep::NewLine,
         }
     }
 

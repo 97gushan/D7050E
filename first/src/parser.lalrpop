@@ -31,7 +31,7 @@ FindKeyword: Box<ExprTree> = {
 
     <FunctionCall>,
 
-    "return" <Expr> => Box::new(ExprTree::Return(<>)), 
+    "return" <ChooseExpr> => Box::new(ExprTree::Return(<>)), 
 
     "print" <ChooseExpr> => Box::new(ExprTree::Print(<>)),
 }
