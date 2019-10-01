@@ -1,45 +1,12 @@
 pub mod interpreter {
 
-    use lazy_static;
     use crate::ast::*;
 
-    use std::collections::HashMap;
-    use std::sync::Mutex;
+    use crate::memory::*;    
 
-    lazy_static! {
-        static ref MEMORY: Mutex<HashMap<&'static str, IntRep>> = {
-            let m = HashMap::new();
-            Mutex::new(m)
-        };
+    use crate::memory::memory_handler::IntRep;
 
-        static ref SCOPE: Mutex<Vec<Mutex<HashMap<&'static str, IntRep>>>> = {
-            let s = Vec::new();
-            Mutex::new(s)
-        };
-
-        static ref FUNCTION_MAP: Mutex<HashMap<&'static str, IntRep>> = {
-            let f = HashMap::new();
-            Mutex::new(f)
-        };
-
-        static ref STACK: Mutex<Vec<IntRep>> = {
-            let s = Vec::new();
-            Mutex::new(s)
-        };
-    }
-
-    #[derive(Debug, PartialEq, Clone)]
-    enum IntRep {
-        Number(i32),
-        Var(String),
-        Bool(bool),
-        Function(Vec<Box<ExprTree>>, Type, ExprTree),
-        Undefined(Type),
-
-        NewLine,
-    }
-
-    pub fn run(mut ast: Vec<Box<ExprTree>>) {
+    pub fn run(mut ast: Vec<Box<ExprTree>>) -> IntRep{
         let len = ast.len();
 
         for _i in 0..len {
@@ -51,17 +18,43 @@ pub mod interpreter {
             }
         }
 
-        call_function("main".to_string(), Vec::new());
+        call_function("main".to_string(), Vec::new())
     }
 
     fn match_node(ast: Box<ExprTree>) -> IntRep {
         match *ast {
+            // types
             ExprTree::Number(num) => IntRep::Number(num),
-            ExprTree::Var(name) => read_from_var(&name),
+            ExprTree::Var(name) => memory_handler::read_from_var(&name),
             ExprTree::Bool(b) => IntRep::Bool(b),
+            
+            // Expressions
             ExprTree::BinNode(l, op, r) => eval_bin_op(op, match_node(l), match_node(r)),
             ExprTree::NumCompNode(l, op, r) => eval_comp_op(op, match_node(l), match_node(r)),
             ExprTree::LogNode(l, op, r) => eval_bool_log_op(op, match_node(l), match_node(r)),
+           
+            // variables
+            ExprTree::AssignNode(n, _t, val) => match *n {
+                ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), match_node(val)),
+                _ => panic!("ERROR: Can't get variable name to assign"),
+            },
+            ExprTree::SetVarNode(n, val) => assign_existing_var(n, val),
+            
+            // conditions
+            ExprTree::IfNode(c, b) => eval_if_statement(match_node(c), b),
+            ExprTree::IfElseNode(c, bi, be) => eval_if_else_statement(match_node(c), bi, be),
+            ExprTree::WhileNode(c, b) => eval_while(c, b),
+            
+            // functions
+            ExprTree::FnNode(n, p, r, b) => eval_function(n, p, r, *b),
+            ExprTree::ParamNode(n, t) => match *n {
+                ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), IntRep::Undefined(t)),
+                _ => panic!("ERROR: Can't get variable name to assign"),
+            },
+            ExprTree::FunctionCall(n, p) => call_function(get_function_name(n), get_function_params(p)),
+            ExprTree::Return(e) => return_function(match_node(e)),
+
+            
             ExprTree::SeqNode(l, r) => {
                 match_node(l);
                 match_node(r);
@@ -71,22 +64,7 @@ pub mod interpreter {
                 println!("{:#?}", match_node(s));
                 IntRep::NewLine
             }
-            ExprTree::AssignNode(n, _t, val) => match *n {
-                ExprTree::Var(name) => assign_var(IntRep::Var(name), match_node(val)),
-                _ => panic!("ERROR: Can't get variable name to assign"),
-            },
-            ExprTree::SetVarNode(n, val) => assign_existing_var(n, val),
-            ExprTree::IfNode(c, b) => eval_if_statement(match_node(c), b),
-            ExprTree::IfElseNode(c, bi, be) => eval_if_else_statement(match_node(c), bi, be),
-            ExprTree::WhileNode(c, b) => eval_while(c, b),
-            ExprTree::FnNode(n, p, r, b) => eval_function(n, p, r, *b),
-            ExprTree::ParamNode(n, t) => match *n {
-                ExprTree::Var(name) => assign_var(IntRep::Var(name), IntRep::Undefined(t)),
-                _ => panic!("ERROR: Can't get variable name to assign"),
-            },
-            ExprTree::FunctionCall(n, p) => call_function(get_function_name(n), get_function_params(p)),
-            ExprTree::Return(e) => return_function(match_node(e)),
-            _ => panic!("ERROR: Cant match node"),
+            ExprTree::Pass => IntRep::NewLine,
         }
     }
 
@@ -99,67 +77,12 @@ pub mod interpreter {
         let params = get_function_params_expr(fun_params);
         let return_type = get_function_return_type(fun_return);
 
-        let mut map = FUNCTION_MAP.lock().unwrap();
-
-        // insert the function into the hashmap
-        map.insert(Box::leak(name.into_boxed_str()), IntRep::Function(params, return_type, b));
-
+        memory_handler::insert_function(name, IntRep::Function(params, return_type, b));
+        
         IntRep::NewLine        
     }
 
-    /**
-     * Takes a function name and returns the ExprTree branch and params of that function
-     */
-    fn read_function(name: String) -> (ExprTree, Vec<Box<ExprTree>>){
-        let map = FUNCTION_MAP.lock().unwrap();
-
-        println!("function call {}", name);
-
-        match map.get(&*name) {
-            Some(fun) => match fun {
-                IntRep::Function(p, _r, b) => {
-                    
-                    // return the branch and the params
-                    (b.clone(), p.clone())    
-                },
-                _ => panic!("ERROR: Can't read function"),
-            },
-            None => {
-                panic!("ERROR: No function with the name: {} ", name);
-            }
-        }
-    }
-
-    fn push_on_return_stack(val: IntRep){
-        let mut stack = STACK.lock().unwrap();
-        stack.push(val);
-    }
-
-    fn pop_from_return_stack() -> IntRep{
-        let mut stack = STACK.lock().unwrap();
-        match stack.pop(){
-            Some(i) => i,
-            None => IntRep::NewLine
-        }
-    }
-
-    /**
-     * Push a memory scope
-     */
-    fn push_on_mem_stack(){
-        let mut stack = SCOPE.lock().unwrap();
-
-        stack.push(Mutex::new(HashMap::new()));
-    }
-
-    /**
-     * Pop a memory scope
-     */
-    fn pop_from_mem_stack(){
-        let mut stack = SCOPE.lock().unwrap();
-
-        stack.pop();
-    }
+   
 
     /**
      * Takes a function name and a vector of args
@@ -169,10 +92,10 @@ pub mod interpreter {
     fn call_function(name: String, args: Vec<IntRep>) -> IntRep {
 
         // create a new scope
-        push_on_mem_stack();
+        memory_handler::push_on_mem_stack();
 
         // get branch and params from the functions
-        let (branch, params) = read_function(name);
+        let (branch, params) = memory_handler::read_function(name);
 
         if params.len() != args.len(){
             panic!("ERROR: Wrong amount of arguments. Expected {} found {}", params.len(), args.len());
@@ -193,17 +116,17 @@ pub mod interpreter {
                 _ => panic!("ERROR: Value is not a parameter"),
             }
 
-            assign_var(name, args[i].clone());
+            memory_handler::assign_var(name, args[i].clone());
         }
 
         match_node(Box::new(branch.clone()));
 
-        pop_from_mem_stack();
-        pop_from_return_stack()
+        memory_handler::pop_from_mem_stack();
+        memory_handler::pop_from_return_stack()
     }
 
     fn return_function(return_val: IntRep) -> IntRep{
-        push_on_return_stack(return_val);
+        memory_handler::push_on_return_stack(return_val);
         IntRep::NewLine
     }
 
@@ -250,60 +173,17 @@ pub mod interpreter {
         match *n {
             ExprTree::Var(name) => {
                 let value = match_node(val);
-                let saved_value = read_from_var(&name);
+                let saved_value = memory_handler::read_from_var(&name);
 
                 // check if types match
                 if std::mem::discriminant(&value) == std::mem::discriminant(&saved_value) {
-                    assign_var(IntRep::Var(name), value)
+                    memory_handler::assign_var(IntRep::Var(name), value)
                 } else {
                     panic!("ERROR: can't assign to var, different types");
                 }
             }
             _ => panic!("ERROR: Can't get variable name to assign"),
         }
-    }
-
-    fn read_from_var(name: &str) -> IntRep {
-        let scope = SCOPE.lock().unwrap();
-
-        match scope.last(){
-            Some(m) => {
-                let map = m.lock().unwrap();
-                match map.get(&*name) {
-                    Some(var) => match var {
-                        IntRep::Number(num) => IntRep::Number(*num),
-                        IntRep::Bool(b) => IntRep::Bool(*b),
-                        IntRep::Undefined(t) => IntRep::Undefined(*t),
-                        _ => panic!("ERROR: Var is not i32 or bool"),
-                    },
-                    None => {
-                        panic!("ERROR: Var not found in scope");
-                    }
-                }
-            }, 
-                
-            None => panic!("ERROR: No scope found"),
-        }
-    }
-
-    fn assign_var(name: IntRep, val: IntRep) -> IntRep {        
-        match name {
-            IntRep::Var(n) => {
-                let scope = SCOPE.lock().unwrap();
-
-                match scope.last(){
-                    Some(m) => {
-                        let mut map = m.lock().unwrap();
-                        map.insert(Box::leak(n.into_boxed_str()), val);
-                    },
-                        
-                    None => {panic!("ERROR: No scope found");},
-                }
-            }
-            _ => panic!("ERROR: Can't assign to var"),
-        }
-
-        IntRep::NewLine
     }
 
     fn eval_bool_log_op(op: LogOp, l: IntRep, r: IntRep) -> IntRep {
