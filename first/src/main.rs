@@ -22,6 +22,10 @@ fn main(){
     let ast = parser_mod::run_parser("src/input.rs");
     println!("{:#?}", ast);
 
-    checker::run(ast.clone());
-    //interpreter::run(ast);
+    if checker::run(ast.clone()){
+        println!("Typechecker passed, interpret program");
+        println!("{:#?}", interpreter::run(ast.clone()));
+    }else{
+        panic!("ERROR: Typechecker failed");
+    }
 }

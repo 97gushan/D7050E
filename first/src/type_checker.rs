@@ -17,37 +17,167 @@ pub mod checker {
         for _i in 0..len {
             match ast.pop() {
                 Some(fun) => {
-                    println!("{:#?}", match_node(fun));
+                    match_node(fun);
                 },
                 None => panic!("Fuuuck"),
             }
         }
-
-        false
+        
+        match call_function("main".to_string(), Vec::new()){
+            IntRep::TypeError => false,
+            _ => true
+        }
     }
 
     fn match_node(ast: Box<ExprTree>) -> IntRep {
 
         match *ast{
+
+            // types
             ExprTree::Var(n) => memory_handler::read_from_var(&n),
             ExprTree::Number(_) => IntRep::Number(0),
             ExprTree::Bool(_) => IntRep::Bool(false),
+            
+            // expressions of different kinds
             ExprTree::BinNode(l, _op, r) => eval_bin_node(match_node(l), match_node(r)),
             ExprTree::NumCompNode(l, _op, r) => eval_num_comp_node(match_node(l), match_node(r)),
             ExprTree::LogNode(l, _op, r) => eval_log_node(match_node(l), match_node(r)),
-            ExprTree::AssignNode(n, _t, val) => match *n {
-                ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), match_node(val)),
-                _ => panic!("ERROR: Can't get variable name to assign"),
-            },
-            ExprTree::SetVarNode(n, val) => eval_set_var_node(n, val),
-            ExprTree::SeqNode(l, r) => eval_seq_node(match_node(l), match_node(r)),
             
-
+            // variables
+            ExprTree::AssignNode(n, t, val) => eval_assign_node(n, t, val),
+            ExprTree::SetVarNode(n, val) => eval_set_var_node(n, val),
+            
+            // functions
+            ExprTree::FnNode(n, p, r, b) => eval_function(n, p, r, *b),
+            ExprTree::FunctionCall(n, p) => call_function(get_function_name(n), get_function_params(p)),
+            ExprTree::Return(e) => return_function(match_node(e)),
             ExprTree::ParamNode(n, t) => match *n {
                 ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), IntRep::Undefined(t)),
                 _ => panic!("ERROR: Can't get variable name to assign"),
-            },
-            _ => {println!("ERROR: Can't typecheck node"); IntRep::Undefined(Type::Bool)},
+            }
+
+            // conditions
+            ExprTree::WhileNode(c, b) => eval_cond_branch(match_node(c), match_node(b)),
+            ExprTree::IfNode(c, b) => eval_cond_branch(match_node(c), match_node(b)),
+            ExprTree::IfElseNode(c, b1, b2) => eval_cond_mult_branch(match_node(c), match_node(b1), match_node(b2)),
+            
+            // good to have stuff
+            ExprTree::SeqNode(l, r) => eval_seq_node(match_node(l), match_node(r)),
+            ExprTree::Print(b) => match_node(b),
+            ExprTree::Pass => IntRep::NewLine,
+        }
+    }
+
+    /**
+     * Takes a function and stores it in the hashmap
+     */
+    fn eval_function(fun_name: FnHead, fun_params: FnHead, fun_return : FnHead, b: ExprTree) -> IntRep{
+        
+        let name = get_function_name(fun_name);
+        let params = get_function_params_expr(fun_params);
+        let return_type = get_function_return_type(fun_return);
+
+        memory_handler::insert_function(name, IntRep::Function(params, return_type, b));
+
+        IntRep::NewLine        
+    }
+
+     /**
+     * Takes a function name and a vector of args
+     * and calls the named function and stores the args
+     * as variables in the hashmap
+     */
+    fn call_function(name: String, args: Vec<IntRep>) -> IntRep {
+
+        // create a new scope
+        memory_handler::push_on_mem_stack();
+
+        // get branch and params from the functions
+        let (branch, params) = memory_handler::read_function(name.clone());
+
+        if params.len() != args.len(){
+            panic!("ERROR: Wrong amount of arguments. Expected {} found {}", params.len(), args.len());
+        }
+
+        // fetch return type and push it to the stack for later comparision with return value
+        let return_type = memory_handler::get_function_type(name.clone());
+        memory_handler::push_on_return_stack(return_type);
+
+        // var to hold a TypeError if there are any in the args 
+        let mut arg_type_checker = IntRep::NewLine;
+
+        // assign the params as variables with the values from the args
+        for i in 0..params.len(){
+
+            let name;
+            let var_type;
+
+            match &*(params[i]){
+                ExprTree::ParamNode(n, t) => {
+                    match &**n{
+                        ExprTree::Var(na) => {
+                            var_type = t;
+                            name = IntRep::Var(na.to_string())
+                        }
+                        _ => panic!("ERROR: Value is not a variable"),
+                    };
+                },
+                _ => panic!("ERROR: Value is not a parameter"),
+            }
+
+            // check so the types of args and params match
+            match (&args[i], var_type){
+                (IntRep::Number(_), Type::I32) => {memory_handler::assign_var(name, args[i].clone());},
+                (IntRep::Bool(_), Type::Bool) =>  {memory_handler::assign_var(name, args[i].clone());},
+                _ => arg_type_checker = IntRep::TypeError
+            }
+        }
+
+        let function_type = match_node(Box::new(branch.clone()));
+
+        let return_type = memory_handler::pop_from_return_stack();
+        memory_handler::pop_from_mem_stack();
+
+        // if there is a TypeError anywhere in the function, return a TypeError
+        match (&function_type, &return_type, &arg_type_checker){
+            (IntRep::TypeError, _, _) => IntRep::TypeError,
+            (_, IntRep::TypeError, _) => IntRep::TypeError,
+            (_, _, IntRep::TypeError) => IntRep::TypeError,
+            _ => function_type,
+        }
+    }
+
+    fn return_function(return_val: IntRep) -> IntRep{
+        // get function type from stack
+        let return_type = memory_handler::pop_from_return_stack();
+
+        // check so return type and value are of same type
+        if std::mem::discriminant(&return_type) == std::mem::discriminant(&return_val) {
+            memory_handler::push_on_return_stack(return_val.clone());
+            return_val
+        }else{
+            IntRep::TypeError
+        }  
+    }
+
+    // evaluate conditions with one branches like if and while
+    fn eval_cond_branch(c: IntRep, b: IntRep) -> IntRep{
+        match (c, b){
+            (IntRep::TypeError, _) => IntRep::TypeError,
+            (IntRep::Number(_), _) => IntRep::TypeError,
+            (_, IntRep::TypeError) => IntRep::TypeError,
+            _ => IntRep::NewLine,
+        }
+    }
+
+    // evaluate conditions with multiple branches like if/else
+    fn eval_cond_mult_branch(c: IntRep, b1: IntRep, b2: IntRep) -> IntRep{
+        match (c, b1, b2){
+            (IntRep::TypeError, _, _) => IntRep::TypeError,
+            (IntRep::Number(_), _, _) => IntRep::TypeError,
+            (_, IntRep::TypeError, _) => IntRep::TypeError,
+            (_, _,IntRep::TypeError) => IntRep::TypeError,
+            _ => IntRep::NewLine,
         }
     }
 
@@ -76,6 +206,25 @@ pub mod checker {
         }
     }
 
+    fn eval_assign_node(name: Box<ExprTree>, t: Type, val: Box<ExprTree>) -> IntRep{
+
+        let value = match_node(val);
+
+        // check so var type and value are of same type
+        match (&value, t){
+            (IntRep::Number(_), Type::I32) => assign_var(name, value),
+            (IntRep::Bool(_), Type::Bool) => assign_var(name, value),
+            _ => IntRep::TypeError
+        }   
+    }
+
+    fn assign_var(name: Box<ExprTree>, val: IntRep) -> IntRep{
+        match *name {
+            ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), val),
+            _ => panic!("ERROR: Can't get variable name to assign"),
+        }
+    }
+
     fn eval_bin_node(l: IntRep, r: IntRep) -> IntRep{
         if std::mem::discriminant(&l) == std::mem::discriminant(&r) {
             IntRep::Number(0)
@@ -97,6 +246,39 @@ pub mod checker {
             IntRep::Bool(true)
         }else{
             IntRep::TypeError
+        }
+    }
+
+    fn get_function_name(fun_name: FnHead) -> String{
+        match fun_name{
+            FnHead::Name(n) => n,
+            _ => panic!("ERROR: Can't read function name"), 
+        }
+    }
+
+    fn get_function_params_expr(fun_params: FnHead) -> Vec<Box<ExprTree>>{
+        match fun_params{
+            FnHead::Params(p) => p,
+            _ => panic!("ERROR: Can't read function params")
+        }
+    }
+
+    fn get_function_params(fun_params: FnHead) -> Vec<IntRep>{
+        let params = get_function_params_expr(fun_params);
+
+        let mut params_int = Vec::new();
+
+        for item in &params{
+            params_int.push(match_node(item.clone()));
+        }
+
+        params_int
+    }
+
+    fn get_function_return_type(fun_return: FnHead) -> Type{
+        match fun_return{
+            FnHead::Return(r) => r,
+            _ => panic!("ERROR: Can't read function return type")
         }
     }
 }	

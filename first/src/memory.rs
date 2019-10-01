@@ -49,7 +49,6 @@ pub mod memory_handler{
 
         // insert the function into the hashmap
         map.insert(Box::leak(name.into_boxed_str()), function);
-
     }
 
      /**
@@ -57,8 +56,6 @@ pub mod memory_handler{
      */
     pub fn read_function(name: String) -> (ExprTree, Vec<Box<ExprTree>>){
         let map = FUNCTION_MAP.lock().unwrap();
-
-        println!("function call {}", name);
 
         match map.get(&*name) {
             Some(fun) => match fun {
@@ -74,6 +71,30 @@ pub mod memory_handler{
             }
         }
     }
+
+    pub fn get_function_type(name: String) -> IntRep{
+        let map = FUNCTION_MAP.lock().unwrap();
+
+        let return_type;
+
+        match map.get(&*name) {
+            Some(fun) => match fun {
+                IntRep::Function(_, r, _) => {
+                    return_type = r    
+                },
+                _ => panic!("ERROR: Can't read function"),
+            },
+            None => {
+                panic!("ERROR: No function with the name: {} ", name);
+            }
+        }
+
+        match return_type{
+            Type::I32 => IntRep::Number(0),
+            Type::Bool => IntRep::Bool(false),
+        }
+    }
+
 
     pub fn push_on_return_stack(val: IntRep){
         let mut stack = STACK.lock().unwrap();
@@ -113,13 +134,13 @@ pub mod memory_handler{
             Some(m) => {
                 let map = m.lock().unwrap();
 
-                println!("{:#?}", map);
                 match map.get(&*name) {
                     Some(var) => match var {
                         IntRep::Number(num) => IntRep::Number(*num),
                         IntRep::Bool(b) => IntRep::Bool(*b),
                         IntRep::Undefined(t) => IntRep::Undefined(*t),
                         IntRep::Var(name) => read_from_var(name),
+                        IntRep::TypeError => IntRep::TypeError,
                         _ => panic!("ERROR: Var is not i32 or bool"),
                     },
                     None => {
@@ -151,4 +172,5 @@ pub mod memory_handler{
 
         IntRep::NewLine
     }
+
 }
