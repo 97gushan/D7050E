@@ -24,7 +24,7 @@ pub mod checker {
         }
         
         match call_function("main".to_string(), Vec::new()){
-            IntRep::TypeError(e) => false,
+            IntRep::TypeError(e) => {println!("{}", e); false},
             _ => true
         }
     }
@@ -154,9 +154,9 @@ pub mod checker {
         let return_type = memory_handler::pop_from_return_stack();
 
         // check so return type and value are of same type
-        if std::mem::discriminant(&return_type) == std::mem::discriminant(&return_val) {
-            memory_handler::push_on_return_stack(return_val.clone());
-            return_val
+        if std::mem::discriminant(&return_type) == std::mem::discriminant(&get_val_from_const(return_val.clone())) {
+            memory_handler::push_on_return_stack(get_val_from_const(return_val.clone()));
+            get_val_from_const(return_val)
         }else{
             IntRep::TypeError("ERROR: Wrong return type".to_string())
         }  
@@ -220,19 +220,27 @@ pub mod checker {
         let value = match_node(val);
 
         // check so var type and value are of same type
-        match (&value, t){
-            (IntRep::Number(_), Type::I32) => assign_var(name, value),
-            (IntRep::Bool(_), Type::Bool) => assign_var(name, value),
-            (IntRep::Const(var), _) => {
-                match ((**var).clone(), t){
-                    (IntRep::Number(_), Type::I32) => assign_var(name, value),
-                    (IntRep::Bool(_), Type::Bool) => assign_var(name, value),
-                    _ => IntRep::TypeError("ERROR: Can't assign to var".to_string())
-                
-                }
-            }
-            _ => IntRep::TypeError("ERROR: Can't assign to var".to_string())
-        }   
+        check_var_types(name, t, value)  
+    }
+
+    fn check_var_types(name: Box<ExprTree>, t: Type, val: IntRep) -> IntRep{
+        match (&val, t){
+            (IntRep::Number(_), Type::I32) => assign_var(name, val),
+            (IntRep::Bool(_), Type::Bool) => assign_var(name, val),
+            (IntRep::Const(var), _) => assign_const(name, t, (**var).clone()),
+            _ => IntRep::TypeError("ERROR: missmatched variable types".to_string()),
+
+        }
+    }
+
+    fn assign_const(name: Box<ExprTree>,t: Type, val: IntRep) -> IntRep{
+        match (&val, t){
+            (IntRep::Number(_), Type::I32) => assign_var(name, IntRep::Const(Box::new(val))),
+            (IntRep::Bool(_), Type::Bool) => assign_var(name, IntRep::Const(Box::new(val))),
+            (IntRep::Const(var), _t) => assign_const(name, t, (**var).clone()),
+            _ => IntRep::TypeError("ERROR: missmatched variable types".to_string()),
+
+        }
     }
 
     fn assign_var(name: Box<ExprTree>, val: IntRep) -> IntRep{
@@ -242,8 +250,18 @@ pub mod checker {
         }
     }
 
+    fn get_val_from_const(c: IntRep) -> IntRep{
+         if let IntRep::Const(val) = c{
+            *val
+        }else{
+            c
+        }
+    }
+
     fn eval_bin_node(l: IntRep, r: IntRep) -> IntRep{
-        if std::mem::discriminant(&l) == std::mem::discriminant(&r) {
+ 
+
+        if std::mem::discriminant(&get_val_from_const(l)) == std::mem::discriminant(&get_val_from_const(r)) {
             IntRep::Number(0)
         }else{
             IntRep::TypeError("ERROR: missmatch types in binary operation".to_string())
@@ -251,7 +269,7 @@ pub mod checker {
     }
 
     fn eval_num_comp_node(l: IntRep, r: IntRep) -> IntRep{
-        if std::mem::discriminant(&l) == std::mem::discriminant(&r) {
+        if std::mem::discriminant(&get_val_from_const(l)) == std::mem::discriminant(&get_val_from_const(r)) {
             IntRep::Bool(true)
         }else{
             IntRep::TypeError("ERROR: missmatch types in compare operation".to_string())
@@ -259,7 +277,7 @@ pub mod checker {
     }
 
     fn eval_log_node(l: IntRep, r: IntRep) -> IntRep{
-        if std::mem::discriminant(&l) == std::mem::discriminant(&r) {
+        if std::mem::discriminant(&get_val_from_const(l)) == std::mem::discriminant(&get_val_from_const(r)) {
             IntRep::Bool(true)
         }else{
             IntRep::TypeError("ERROR: missmatch types in boolean operation".to_string())

@@ -13,8 +13,6 @@ extern crate lazy_static;
 use crate::parser_controller::parser_mod;
 use crate::interpret::interpreter;
 use crate::type_checker::checker;
-use crate::memory::memory_handler;
-
 
 
 fn main(){
