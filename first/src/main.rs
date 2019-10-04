@@ -3,7 +3,10 @@ mod parser_controller;
 mod interpret;
 mod type_checker;
 mod memory;
+<<<<<<< Updated upstream
 mod llvm;
+=======
+>>>>>>> Stashed changes
 
 #[macro_use] 
 extern crate lalrpop_util;

@@ -1,8 +1,6 @@
 
 
-fn main() -> i32{
-    let a: i32 = 123;
-    let b: i32 = 1;
+let a: i32 = 123;
 
 
     while(b < 10){
