@@ -3,6 +3,7 @@ mod parser_controller;
 mod interpret;
 mod type_checker;
 mod memory;
+mod llvm;
 
 #[macro_use] 
 extern crate lalrpop_util;
@@ -13,8 +14,7 @@ extern crate lazy_static;
 use crate::parser_controller::parser_mod;
 use crate::interpret::interpreter;
 use crate::type_checker::checker;
-use crate::memory::memory_handler;
-
+use crate::llvm::llvm_generator;
 
 
 fn main(){
@@ -24,6 +24,10 @@ fn main(){
 
     if checker::run(ast.clone()){
         println!("Typechecker passed, interpret program");
+        // match llvm_generator::generate_llvm_code((*ast[0]).clone()){
+        //     Ok(_) => (),
+        //     Err(error) => panic!("{}", error),
+        // }
         println!("{:#?}", interpreter::run(ast.clone()));
     }else{
         panic!("ERROR: Typechecker failed");

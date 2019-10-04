@@ -13,3 +13,4 @@ nom = "5.0.1"
 lalrpop-util = "0.17.2"
 regex = "0.2.1"
 lazy_static= "1.4.0"
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm8-0" }

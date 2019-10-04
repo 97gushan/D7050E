@@ -4,7 +4,12 @@ fn main() -> i32{
     let a: i32 = 123;
     let b: i32 = 1;
 
-    
+
+    while(b < 10){
+        print(b);
+        b = b + 1;
+    }
+
     return foo(b) / 5;
 }
 
