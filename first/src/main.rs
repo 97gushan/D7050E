@@ -3,10 +3,7 @@ mod parser_controller;
 mod interpret;
 mod type_checker;
 mod memory;
-<<<<<<< Updated upstream
 mod llvm;
-=======
->>>>>>> Stashed changes
 
 #[macro_use] 
 extern crate lalrpop_util;
@@ -18,6 +15,7 @@ use crate::parser_controller::parser_mod;
 use crate::interpret::interpreter;
 use crate::type_checker::checker;
 use crate::llvm::llvm_generator;
+use std::convert::TryInto;
 
 
 fn main(){
@@ -25,13 +23,14 @@ fn main(){
     let ast = parser_mod::run_parser("src/input.rs");
     println!("{:#?}", ast);
 
-    if checker::run(ast.clone()){
+    if true{
+    // if checker::run(ast.clone()){
         println!("Typechecker passed, interpret program");
-        // match llvm_generator::generate_llvm_code((*ast[0]).clone()){
-        //     Ok(_) => (),
-        //     Err(error) => panic!("{}", error),
-        // }
-        println!("{:#?}", interpreter::run(ast.clone()));
+        match llvm_generator::generate_llvm_code((*ast[0]).clone()){
+            Ok(_) => (),
+            Err(error) => panic!("{}", error),
+        }
+        //println!("{:#?}", interpreter::run(ast.clone()));
     }else{
         panic!("ERROR: Typechecker failed");
     }
