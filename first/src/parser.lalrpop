@@ -20,7 +20,7 @@ pub SeparateLines: Box<ExprTree> = {
      
 }
 
-FindKeyword: Box<ExprTree> = {
+pub FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
     "if" <StatementIf>,
     "while" <StatementWhile>,
@@ -116,7 +116,7 @@ VarType: Type ={
     ": bool" "="? => Type::Bool,
 }
 
-ChooseExpr : Box<ExprTree> = {
+pub ChooseExpr : Box<ExprTree> = {
     BoolComp,
     NumComp,
     Expr,

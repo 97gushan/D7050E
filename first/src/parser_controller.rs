@@ -1,6 +1,6 @@
 pub mod parser_mod{
     lalrpop_mod!(pub parser);
-
+    
 
     use crate::ast::*;
     use std::fs::File;
@@ -17,7 +17,7 @@ pub mod parser_mod{
 
         println!("{}", &input);
 
-        vec!(parser::ExprParser::new().parse(&input).unwrap())
+        vec!(parser::SeparateLinesParser::new().parse(&input).unwrap())
     }
 
 

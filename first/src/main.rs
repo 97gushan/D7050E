@@ -1,3 +1,6 @@
+#![allow(unused_imports)]
+#![allow(dead_code)]
+
 mod ast;
 mod parser_controller;
 mod interpret;
@@ -19,16 +22,16 @@ use std::convert::TryInto;
 
 
 fn main(){
-
+    
     let ast = parser_mod::run_parser("src/input.rs");
     println!("{:#?}", ast);
 
     if true{
     // if checker::run(ast.clone()){
         println!("Typechecker passed, interpret program");
-        match llvm_generator::generate_llvm_code((*ast[0]).clone()){
+        match llvm_generator::generate_llvm_code((ast[0]).clone()){
             Ok(_) => (),
-            Err(error) => panic!("{}", error),
+            Err(error) => panic!("-- {}", error),
         }
         //println!("{:#?}", interpreter::run(ast.clone()));
     }else{
