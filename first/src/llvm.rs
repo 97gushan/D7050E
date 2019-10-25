@@ -174,12 +174,12 @@ pub mod llvm_generator{
             let mut tmp_val: i32 = num;
             let neg = if tmp_val < 0 {tmp_val *= -1; true} else {false};
 
-            let return_value = self.context.i64_type().const_int(tmp_val as u64, true);
+            let return_value = self.context.i32_type().const_int(tmp_val as u64, true);
             
             // if the value is supposed to be negative multiply by the IntValue 11111....
             // thus make it negative
             if neg{
-                return_value.const_mul(self.context.i64_type().const_all_ones())
+                return_value.const_mul(self.context.i32_type().const_all_ones())
             }else{
                 return_value
             }
