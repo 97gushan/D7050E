@@ -26,10 +26,10 @@ fn main(){
     let ast = parser_mod::run_parser("src/input.rs");
     println!("{:#?}", ast);
 
-    if true{
-    // if checker::run(ast.clone()){
+    // if true{
+    if checker::run(ast.clone()){
         println!("Typechecker passed, interpret program");
-        match llvm_generator::generate_llvm_code((ast[0]).clone()){
+        match llvm_generator::generate_llvm_code(ast.clone()){
             Ok(_) => (),
             Err(error) => panic!("-- {}", error),
         }
