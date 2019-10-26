@@ -4,11 +4,9 @@ fn main() -> i32 {
 
     
 
-    if(2 <= 1){
-        let a: i32 = 10;
-    }else{
-        let b: i32 = 16;
+    if(0 <= 1){
+        return 10;
     }
 
-    return b;
+    return 5;
 }

@@ -165,17 +165,27 @@ pub mod llvm_generator{
 
                     let condition = self.match_node(&cond);
 
+
                     let basic_block1 = self.context.append_basic_block(&self.fn_value(), "b1");
-                    self.builder.position_at_end(&basic_block1);
-
-                    let b1 = &self.compile_block(b);
-
                     let cont_block = self.context.append_basic_block(&self.fn_value(), "cont");
-                    self.builder.position_at_end(&cont_block);
 
-                    (self.builder.build_conditional_branch(condition, 
-                                                            &basic_block1, 
-                                                            &basic_block1.get_next_basic_block().unwrap()), true)
+
+                    self.builder.build_conditional_branch(condition, &basic_block1, &cont_block);
+
+
+                    self.builder.position_at_end(&basic_block1);
+                    self.compile_block(b);
+                    self.builder.build_unconditional_branch(&cont_block);
+                    
+                    self.builder.position_at_end(&cont_block);
+                    let phi = self.builder.build_phi(self.context.i32_type(), "iftmp");
+
+                    phi.add_incoming(&[
+                        (&self.compile_num(11), &basic_block1),
+                        (&self.compile_num(10), &cont_block)
+                    ]);
+
+                    (phi.as_instruction(), false)
                 },
                
                
