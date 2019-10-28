@@ -129,63 +129,13 @@ pub mod llvm_generator{
                     (self.match_node(&*expr.clone()).as_instruction().unwrap(), false)
                 },
                 ExprTree::IfElseNode(cond, ib, eb) => {
-                    let condition = self.match_node(&cond);
-
-
-                    let basic_block1 = self.context.append_basic_block(&self.fn_value(), "b1");
-                    let basic_block2 = self.context.append_basic_block(&self.fn_value(), "b2");
-                    let cont_block = self.context.append_basic_block(&self.fn_value(), "cont");
-
-
-                    self.builder.build_conditional_branch(condition, &basic_block1, &basic_block2);
-
-
-                    self.builder.position_at_end(&basic_block1);
-                    self.compile_block(ib);
-                    self.builder.build_unconditional_branch(&cont_block);
-
-
-                    self.builder.position_at_end(&basic_block2);
-                    self.compile_block(eb);
-
-                    self.builder.build_unconditional_branch(&cont_block);
-                    
-                    
-                    self.builder.position_at_end(&cont_block);
-                    let phi = self.builder.build_phi(self.context.i32_type(), "iftmp");
-
-                    phi.add_incoming(&[
-                        (&self.compile_num(11), &basic_block1),
-                        (&self.compile_num(10), &basic_block2)
-                    ]);
-
-                    (phi.as_instruction(), false)
+                    (self.compile_if_else(cond, ib, eb), false)
 
                 }, ExprTree::IfNode(cond, b) => {
-
-                    let condition = self.match_node(&cond);
-
-
-                    let basic_block1 = self.context.append_basic_block(&self.fn_value(), "b1");
-                    let cont_block = self.context.append_basic_block(&self.fn_value(), "cont");
-
-
-                    self.builder.build_conditional_branch(condition, &basic_block1, &cont_block);
-
-
-                    self.builder.position_at_end(&basic_block1);
-                    self.compile_block(b);
-                    self.builder.build_unconditional_branch(&cont_block);
-                    
-                    self.builder.position_at_end(&cont_block);
-                    let phi = self.builder.build_phi(self.context.i32_type(), "iftmp");
-
-                    phi.add_incoming(&[
-                        (&self.compile_num(11), &basic_block1),
-                        (&self.compile_num(10), &cont_block)
-                    ]);
-
-                    (phi.as_instruction(), false)
+                    (self.compile_if(cond, b), false)
+                },
+                ExprTree::WhileNode(cond, b) => {
+                    (self.compile_while(cond, b), false)
                 },
                
                
@@ -210,6 +160,91 @@ pub mod llvm_generator{
                     inst
                 }
             }
+        }
+
+        fn compile_while(&mut self, cond: Box<ExprTree>, branch: Box<ExprTree>) -> InstructionValue{
+            let condition = self.match_node(&cond);
+
+            let basic_block1 = self.context.append_basic_block(&self.fn_value(), "b1");
+            let cont_block = self.context.append_basic_block(&self.fn_value(), "cont");
+
+
+            self.builder.build_conditional_branch(condition, &basic_block1, &cont_block);
+
+
+            self.builder.position_at_end(&basic_block1);
+            self.compile_block(branch);
+            self.builder.build_conditional_branch(condition, &basic_block1, &cont_block);
+
+            self.builder.position_at_end(&cont_block);
+            let phi = self.builder.build_phi(self.context.i32_type(), "whiletmp");
+
+            phi.add_incoming(&[
+                (&self.compile_num(11), &basic_block1),
+                (&self.compile_num(10), &cont_block)
+            ]);
+
+            phi.as_instruction()
+        }
+
+        fn compile_if_else(&mut self, cond: Box<ExprTree>, if_branch: Box<ExprTree>, else_branch: Box<ExprTree>) -> InstructionValue{
+            let condition = self.match_node(&cond);
+
+
+            let basic_block1 = self.context.append_basic_block(&self.fn_value(), "b1");
+            let basic_block2 = self.context.append_basic_block(&self.fn_value(), "b2");
+            let cont_block = self.context.append_basic_block(&self.fn_value(), "cont");
+
+
+            self.builder.build_conditional_branch(condition, &basic_block1, &basic_block2);
+
+
+            self.builder.position_at_end(&basic_block1);
+            self.compile_block(if_branch);
+            self.builder.build_unconditional_branch(&cont_block);
+
+
+            self.builder.position_at_end(&basic_block2);
+            self.compile_block(else_branch);
+
+            self.builder.build_unconditional_branch(&cont_block);
+            
+            
+            self.builder.position_at_end(&cont_block);
+            let phi = self.builder.build_phi(self.context.i32_type(), "iftmp");
+
+            phi.add_incoming(&[
+                (&self.compile_num(11), &basic_block1),
+                (&self.compile_num(10), &basic_block2)
+            ]);
+
+            phi.as_instruction()
+        }
+
+        fn compile_if(&mut self, cond: Box<ExprTree>, branch: Box<ExprTree>) -> InstructionValue{
+            let condition = self.match_node(&cond);
+
+
+            let basic_block1 = self.context.append_basic_block(&self.fn_value(), "b1");
+            let cont_block = self.context.append_basic_block(&self.fn_value(), "cont");
+
+
+            self.builder.build_conditional_branch(condition, &basic_block1, &cont_block);
+
+
+            self.builder.position_at_end(&basic_block1);
+            self.compile_block(branch);
+            self.builder.build_unconditional_branch(&cont_block);
+            
+            self.builder.position_at_end(&cont_block);
+            let phi = self.builder.build_phi(self.context.i32_type(), "iftmp");
+
+            phi.add_incoming(&[
+                (&self.compile_num(11), &basic_block1),
+                (&self.compile_num(10), &cont_block)
+            ]);
+
+            phi.as_instruction()
         }
 
         fn compile_log(&self, op: LogOp, l: IntValue, r: IntValue) -> IntValue{

@@ -2,11 +2,9 @@
 
 fn main() -> i32 {
 
-    
+    let a: i32 = 1;
 
-    if(0 <= 1){
-        return 10;
-    }
+  
 
-    return 5;
+    return a;
 }
