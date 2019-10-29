@@ -68,6 +68,7 @@ pub mod llvm_generator{
 
         fn match_node(&self, expr: &ExprTree) -> IntValue{
             match expr{
+                ExprTree::Const(val) => self.match_node(val),
                 ExprTree::Var(name) => {
                     let var = self.get_variable(&name);
                     self.builder.build_load(*var, &name).into_int_value()
@@ -94,7 +95,7 @@ pub mod llvm_generator{
                     }
                 }
                 
-                _ => panic!("")
+                _ => panic!("ERROR: Can't match node")
             }
         }
 
@@ -285,18 +286,7 @@ pub mod llvm_generator{
         }
 
         fn compile_num(&self, num: i32) -> IntValue{
-            let mut tmp_val: i32 = num;
-            let neg = if tmp_val < 0 {tmp_val *= -1; true} else {false};
-
-            let return_value = self.context.i32_type().const_int(tmp_val as u64, true);
-            
-            // if the value is supposed to be negative multiply by the IntValue 11111....
-            // thus make it negative
-            if neg{
-                return_value.const_mul(self.context.i32_type().const_all_ones())
-            }else{
-                return_value
-            }
+            self.context.i32_type().const_int(num as u64, false)
         }
     }
 
