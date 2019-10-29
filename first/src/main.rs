@@ -21,12 +21,12 @@ use crate::llvm::llvm_generator;
 use std::convert::TryInto;
 
 
+
 fn main(){
     
     let ast = parser_mod::run_parser("src/input.rs");
     println!("{:#?}", ast);
 
-    // if true{
     if checker::run(ast.clone()){
         println!("Typechecker passed, interpret program");
         match llvm_generator::generate_llvm_code(ast.clone()){

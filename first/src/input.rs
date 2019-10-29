@@ -1,5 +1,4 @@
 fn foo() -> i32{
-
     let a: i32 = 1;
 
     while(a < 10){
@@ -14,5 +13,6 @@ fn foo() -> i32{
 }
 
 fn main() -> i32 {
+    let a: i32 = foo();
     return foo();
 }

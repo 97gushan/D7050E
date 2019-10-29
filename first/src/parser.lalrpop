@@ -22,6 +22,8 @@ pub SeparateLines: Box<ExprTree> = {
 
 pub FindKeyword: Box<ExprTree> = {
     "let" <Assign>,
+    "let mut" <AssignMut>,
+
     "if" <StatementIf>,
     "while" <StatementWhile>,
 
@@ -98,8 +100,12 @@ AssignParam: Box<ExprTree> = {
     AssignVar VarType => Box::new(ExprTree::ParamNode(<>)),
 }
 
-Assign: Box<ExprTree> = {
+AssignMut: Box<ExprTree> = {
     AssignVar VarType ChooseExpr => Box::new(ExprTree::AssignNode(<>)),
+}
+
+Assign: Box<ExprTree> = {
+    <a:AssignVar> <t:VarType> <c:ChooseExpr> => Box::new(ExprTree::AssignNode(a, t, Box::new(ExprTree::Const(c)))),
 }
 
 AssignVar: Box<ExprTree> = {

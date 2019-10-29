@@ -26,6 +26,7 @@ pub mod interpreter {
             // types
             ExprTree::Number(num) => IntRep::Number(num),
             ExprTree::Var(name) => memory_handler::read_from_var(&name),
+            ExprTree::Const(val) => IntRep::Const(Box::new(match_node(val))),
             ExprTree::Bool(b) => IntRep::Bool(b),
             
             // Expressions
@@ -34,10 +35,7 @@ pub mod interpreter {
             ExprTree::LogNode(l, op, r) => eval_bool_log_op(op, match_node(l), match_node(r)),
            
             // variables
-            ExprTree::AssignNode(n, _t, val) => match *n {
-                ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), match_node(val)),
-                _ => panic!("ERROR: Can't get variable name to assign"),
-            },
+            ExprTree::AssignNode(n, t, val) => eval_assign_node(n, t, val),
             ExprTree::SetVarNode(n, val) => assign_existing_var(n, val),
             
             // conditions
@@ -169,11 +167,42 @@ pub mod interpreter {
         IntRep::NewLine
     }
 
+     fn eval_assign_node(name: Box<ExprTree>, t: Type, val: Box<ExprTree>) -> IntRep{
+
+        let value = match_node(val);
+
+        // check so var type and value are of same type
+        match (&value, t){
+            (IntRep::Number(_), Type::I32) => assign_var(name, value),
+            (IntRep::Bool(_), Type::Bool) => assign_var(name, value),
+            (IntRep::Const(var), _) => {
+                match ((**var).clone(), t){
+                    (IntRep::Number(val), Type::I32) => assign_var(name, IntRep::Number(val)),
+                    (IntRep::Bool(val), Type::Bool) => assign_var(name,  IntRep::Bool(val)),
+                    _ => IntRep::TypeError("ERROR: Can't assign to var".to_string())
+                }
+            }
+            _ => IntRep::TypeError("ERROR: Can't assign to var".to_string())
+        }   
+    }
+
+    fn assign_var(name: Box<ExprTree>, val: IntRep) -> IntRep{
+        match *name {
+            ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), val),
+            _ => panic!("ERROR: Can't get variable name to assign"),
+        }
+    }
+
     fn assign_existing_var(n: Box<ExprTree>, val: Box<ExprTree>) -> IntRep {
         match *n {
             ExprTree::Var(name) => {
-                let value = match_node(val);
+                let mut value = match_node(val);
                 let saved_value = memory_handler::read_from_var(&name);
+                
+                // if assign value is unmutable, get value from const node
+                if let IntRep::Const(val) = value{
+                    value = * val;
+                }
 
                 // check if types match
                 if std::mem::discriminant(&value) == std::mem::discriminant(&saved_value) {
@@ -181,7 +210,7 @@ pub mod interpreter {
                 } else {
                     panic!("ERROR: can't assign to var, different types");
                 }
-            }
+            },
             _ => panic!("ERROR: Can't get variable name to assign"),
         }
     }

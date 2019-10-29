@@ -7,11 +7,12 @@ pub mod memory_handler{
     pub enum IntRep {
         Number(i32),
         Var(String),
+        Const(Box<IntRep>),
         Bool(bool),
         Function(Vec<Box<ExprTree>>, Type, ExprTree),
         Undefined(Type),
 
-        TypeError,
+        TypeError(String),
 
         NewLine,
     }
@@ -139,8 +140,9 @@ pub mod memory_handler{
                         IntRep::Number(num) => IntRep::Number(*num),
                         IntRep::Bool(b) => IntRep::Bool(*b),
                         IntRep::Undefined(t) => IntRep::Undefined(*t),
-                        IntRep::Var(name) => read_from_var(name),
-                        IntRep::TypeError => IntRep::TypeError,
+                        IntRep::Var(n) => IntRep::Var(n.to_string()),
+                        IntRep::Const(val) => IntRep::Const((*val).clone()),
+                        IntRep::TypeError(e) => IntRep::TypeError(e.to_string()),
                         _ => panic!("ERROR: Var is not i32 or bool"),
                     },
                     None => {
@@ -154,6 +156,7 @@ pub mod memory_handler{
     }
 
     pub fn assign_var(name: IntRep, val: IntRep) -> IntRep {        
+        println!("{:#?} {:#?}", name, val);
         match name {
             IntRep::Var(n) => {
                 let scope = SCOPE.lock().unwrap();
