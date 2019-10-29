@@ -164,25 +164,23 @@ pub mod llvm_generator{
         }
 
         fn compile_while(&mut self, cond: Box<ExprTree>, branch: Box<ExprTree>) -> InstructionValue{
-            let condition = self.match_node(&cond);
-
             let basic_block1 = self.context.append_basic_block(&self.fn_value(), "b1");
             let cont_block = self.context.append_basic_block(&self.fn_value(), "cont");
 
 
-            self.builder.build_conditional_branch(condition, &basic_block1, &cont_block);
+            self.builder.build_conditional_branch(self.match_node(&cond), &basic_block1, &cont_block);
 
 
             self.builder.position_at_end(&basic_block1);
             self.compile_block(branch);
-            self.builder.build_conditional_branch(condition, &basic_block1, &cont_block);
+            self.builder.build_conditional_branch(self.match_node(&cond), &basic_block1, &cont_block);
 
             self.builder.position_at_end(&cont_block);
             let phi = self.builder.build_phi(self.context.i32_type(), "whiletmp");
 
-            phi.add_incoming(&[
-                (&self.compile_num(11), &basic_block1),
-                (&self.compile_num(10), &cont_block)
+            phi.add_incoming(&[ 
+                (&self.compile_num(0), &basic_block1),
+                (&self.compile_num(1), &basic_block1),
             ]);
 
             phi.as_instruction()
@@ -346,7 +344,6 @@ pub mod llvm_generator{
         };
 
         llvm.compile_block(code);
-        module.print_to_stderr();
 
         Ok(())
     }
@@ -368,13 +365,16 @@ pub mod llvm_generator{
 
         }
 
-
+        module.print_to_stderr();
         let compiled_program: JitFunction<ExprFunc> =
             unsafe {execution_engine.get_function("main").ok().unwrap()};
 
         unsafe {
             println!("Whuut: {} ", compiled_program.call());
         }
+
+        
+
         Ok(())
     }
 }

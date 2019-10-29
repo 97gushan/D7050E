@@ -1,18 +1,16 @@
 fn foo() -> i32{
     let a: i32 = 1;
 
-    while(a < 10){
-        a = a + 1;
-    }
+    let b: i32 = 1;
 
-    if(a >= 10 || 9 == 20 - 5 && false){
-        return a;
+    while(b <= 10){
+        b = b + 1;
     }
+    return b;
 
-    return a + 5 * (2 - 5);
 }
 
 fn main() -> i32 {
-    let a: i32 = foo();
+    
     return foo();
 }
