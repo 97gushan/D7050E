@@ -1,17 +1,20 @@
+fn foo() -> i32{
 
+    let mut a: i32 = 1;
 
-fn main() -> bool{
-    
-    let mut a: i32 = 5;
-    let c: i32 = 1;
-    
-    let d: i32 = a + 10;
+    while(a < 1){
+        a = a + 1;
+    }
 
-    let g: bool = true;
+    if(a >= 10 || 9 != 20 - 5 && false){
+        return a;
+    }else{
+        return a + 5 * (2 - 5);
+    }
 
-    let h: bool = g && d > 10;
-
-    return h;
 }
 
-
+fn main() -> i32 {
+    let a: i32 = foo();
+    return foo();
+}

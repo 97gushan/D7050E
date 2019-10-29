@@ -156,6 +156,7 @@ pub mod memory_handler{
     }
 
     pub fn assign_var(name: IntRep, val: IntRep) -> IntRep {        
+        println!("{:#?} {:#?}", name, val);
         match name {
             IntRep::Var(n) => {
                 let scope = SCOPE.lock().unwrap();
