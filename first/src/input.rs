@@ -1,24 +1,17 @@
 
 
-fn main() -> i32{
-    let a: i32 = 123;
-    let b: i32 = 1;
-
+fn main() -> bool{
     
-    return foo(b) / 5;
-}
+    let mut a: i32 = 5;
+    let c: i32 = 1;
+    
+    let d: i32 = a + 10;
 
+    let g: bool = true;
 
-fn foo(b: i32) -> i32{
+    let h: bool = g && d > 10;
 
-    return bar(10, true) + 1;
-}
-
-
-fn bar(c: i32, k: bool) -> i32{
-
-
-    return c + 10;
+    return h;
 }
 
 
