@@ -11,6 +11,7 @@ fn foo() -> i32{
 }
 
 fn main() -> i32 {
-    
-    return foo();
+    let b: i32 = foo();
+
+    return b;
 }

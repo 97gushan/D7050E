@@ -103,7 +103,7 @@ pub mod checker {
 
         // fetch return type and push it to the stack for later comparision with return value
         let return_type = memory_handler::get_function_type(name.clone());
-        memory_handler::push_on_return_stack(return_type);
+        memory_handler::push_on_return_stack(return_type.clone());
 
         // var to hold a TypeError if there are any in the args 
         let mut arg_type_checker = IntRep::NewLine;
@@ -138,15 +138,23 @@ pub mod checker {
         let function_type = match_node(Box::new(branch.clone()));
 
         memory_handler::pop_from_mem_stack();
-        let return_type = memory_handler::pop_from_return_stack();
+        let return_val = memory_handler::pop_from_return_stack();
 
-        // if there is a TypeError anywhere in the function, return a TypeError
-        match (&function_type, &return_type, &arg_type_checker){
-            (IntRep::TypeError(e), _, _) => IntRep::TypeError(e.to_string()),
-            (_, IntRep::TypeError(e), _) => IntRep::TypeError(e.to_string()),
-            (_, _, IntRep::TypeError(e)) => IntRep::TypeError(e.to_string()),
-            _ => return_type,
+        if std::mem::discriminant(&return_val) == std::mem::discriminant(&return_type) {
+            // if there is a TypeError anywhere in the function, return a TypeError
+            match (&function_type, &return_val, &arg_type_checker){
+                (IntRep::TypeError(e), _, _) => IntRep::TypeError(e.to_string()),
+                (_, IntRep::TypeError(e), _) => IntRep::TypeError(e.to_string()),
+                (_, _, IntRep::TypeError(e)) => IntRep::TypeError(e.to_string()),
+                _ => return_val,
+            }
+        }else{
+            IntRep::TypeError("ERROR: return type and value does not match".to_string())
         }
+
+
+
+        
     }
 
     fn return_function(return_val: IntRep) -> IntRep{
@@ -231,40 +239,6 @@ pub mod checker {
         }
     }
 
-    // fn eval_assign_node(name: Box<ExprTree>, t: Type, val: Box<ExprTree>) -> IntRep{
-
-    //     let value = match_node(val);
-
-    //     // check so var type and value are of same type
-    //     check_var_types(name, t, value)  
-    // }
-
-    // fn check_var_types(name: Box<ExprTree>, t: Type, val: IntRep) -> IntRep{
-    //     match (&val, t){
-    //         (IntRep::Number(_), Type::I32) => assign_var(name, val),
-    //         (IntRep::Bool(_), Type::Bool) => assign_var(name, val),
-    //         (IntRep::Const(var), _) => assign_const(name, t, (**var).clone()),
-    //         _ => IntRep::TypeError("ERROR: missmatched variable types".to_string()),
-
-    //     }
-    // }
-
-    // fn assign_const(name: Box<ExprTree>,t: Type, val: IntRep) -> IntRep{
-    //     match (&val, t){
-    //         (IntRep::Number(_), Type::I32) => assign_var(name, IntRep::Const(Box::new(val))),
-    //         (IntRep::Bool(_), Type::Bool) => assign_var(name, IntRep::Const(Box::new(val))),
-    //         (IntRep::Const(var), _t) => assign_const(name, t, (**var).clone()),
-    //         _ => IntRep::TypeError("ERROR: missmatched variable types".to_string()),
-
-    //     }
-    // }
-
-    // fn assign_var(name: Box<ExprTree>, val: IntRep) -> IntRep{
-    //     match *name {
-    //         ExprTree::Var(name) => memory_handler::assign_var(IntRep::Var(name), val),
-    //         _ => panic!("ERROR: Can't get variable name to assign"),
-    //     }
-    // }
 
     fn get_val_from_const(c: IntRep) -> IntRep{
          if let IntRep::Const(val) = c{
