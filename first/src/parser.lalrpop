@@ -128,19 +128,17 @@ pub ChooseExpr : Box<ExprTree> = {
     Expr,
 }
 
+pub ChooseNumExpr : Box<ExprTree> = {
+    NumComp,
+    Expr,
+}
+
 pub BoolComp: Box<ExprTree> = {
-    BoolComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
     BoolComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
+    BoolComp BoolOp ChooseNumExpr => Box::new(ExprTree::LogNode(<>)),
 
-    NumComp BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
-    NumComp BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
-
-    BoolComp BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
-    Expr BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
-    Expr BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
-
-    Expr BoolOp NumComp => Box::new(ExprTree::LogNode(<>)),
-    NumComp BoolOp Expr => Box::new(ExprTree::LogNode(<>)),
+    ChooseNumExpr BoolOp ChooseNumExpr => Box::new(ExprTree::LogNode(<>)),
+    ChooseNumExpr BoolOp BoolType => Box::new(ExprTree::LogNode(<>)),
 
     "(" <BoolComp> ")",
 
