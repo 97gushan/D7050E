@@ -140,21 +140,19 @@ pub mod checker {
         memory_handler::pop_from_mem_stack();
         let return_val = memory_handler::pop_from_return_stack();
 
-        if std::mem::discriminant(&return_val) == std::mem::discriminant(&return_type) {
-            // if there is a TypeError anywhere in the function, return a TypeError
-            match (&function_type, &return_val, &arg_type_checker){
-                (IntRep::TypeError(e), _, _) => IntRep::TypeError(e.to_string()),
-                (_, IntRep::TypeError(e), _) => IntRep::TypeError(e.to_string()),
-                (_, _, IntRep::TypeError(e)) => IntRep::TypeError(e.to_string()),
-                _ => return_val,
+         // if there is a TypeError anywhere in the function, return a TypeError
+        match (&function_type, &return_val, &arg_type_checker){
+            (IntRep::TypeError(e), _, _) => IntRep::TypeError(e.to_string()),
+            (_, IntRep::TypeError(e), _) => IntRep::TypeError(e.to_string()),
+            (_, _, IntRep::TypeError(e)) => IntRep::TypeError(e.to_string()),
+            _ => {
+                if std::mem::discriminant(&return_val) == std::mem::discriminant(&return_type) {
+                    return_val
+                }else{
+                    IntRep::TypeError("ERROR: return type and value does not match".to_string())
+                }
             }
-        }else{
-            IntRep::TypeError("ERROR: return type and value does not match".to_string())
-        }
-
-
-
-        
+        }    
     }
 
     fn return_function(return_val: IntRep) -> IntRep{
@@ -206,7 +204,7 @@ pub mod checker {
                 if std::mem::discriminant(&value) == std::mem::discriminant(&saved_value) {
                     memory_handler::assign_var(IntRep::Var(name), value)
                 } else {
-                    panic!("ERROR: can't assign to var, different types");
+                    IntRep::TypeError("ERROR: can't assign value to var, wrong type".to_string())
                 }
             },
             _ => panic!("ERROR: Can't get variable name to assign"),
@@ -225,10 +223,10 @@ pub mod checker {
                 match ((**var).clone(), t){
                     (IntRep::Number(val), Type::I32) => assign_var(name, IntRep::Number(val)),
                     (IntRep::Bool(val), Type::Bool) => assign_var(name,  IntRep::Bool(val)),
-                    _ => IntRep::TypeError("ERROR: Can't assign to var".to_string())
+                    _ => assign_var(name,  IntRep::TypeError("ERROR: can't assign value to var, wrong type".to_string()))
                 }
             }
-            _ => IntRep::TypeError("ERROR: Can't assign to var".to_string())
+            _ => assign_var(name,  IntRep::TypeError("ERROR: can't assign value to var, wrong type".to_string()))
         }   
     }
 
